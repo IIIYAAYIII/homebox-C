@@ -779,6 +779,13 @@
         "search": "Search",
         "templates": "Templates"
     },
+    "onboarding": {
+        "title": "Welcome to HomeBox",
+        "subtitle": "First-time setup · Select your language and initial configuration",
+        "select_language": "Select System Language",
+        "preset_success": "Successfully generated {locations} storage locations and {tags} category tags! Existing data is safely preserved.",
+        "preset_already_exists": "Household locations and tags already exist. Existing data was kept intact."
+    },
     "pages": {
         "templates": {
             "no_templates": "No templates yet.",
@@ -787,6 +794,10 @@
     },
     "profile": {
         "active": "Active",
+        "preset_section_title": "Localized Household Presets",
+        "preset_section_sub": "Generate domestic storage locations and categories for Chinese home organization",
+        "preset_description": "Generates household storage locations (Living Room, Bedrooms, Kitchen, Balcony, etc.) and category tags (Appliances, Digital, Documents, etc.). Existing English or custom locations and tags will be preserved as-is without any destructive modification.",
+        "preset_init_btn": "Generate Chinese Locations & Tags",
         "api_key_copied": "Copied to clipboard",
         "api_key_copy": "Copy",
         "api_key_create": "Create API Key",

@@ -14,8 +14,12 @@
   import MdiCheck from "~icons/mdi/check";
   import { useViewPreferences } from "~~/composables/use-preferences";
 
+  import { toast } from "@/components/ui/sonner";
+  import { useLocalizedPresets } from "~~/composables/use-localized-presets";
+
   const { locale, availableLocales, t } = useI18n();
   const preferences = useViewPreferences();
+  const presets = useLocalizedPresets();
 
   const currentLocale = computed(() => locale.value);
 
@@ -29,9 +33,27 @@
     return availableLocales.filter(code => code !== "zh-CN" && code !== "en");
   });
 
-  function selectLanguage(langCode: string) {
+  async function selectLanguage(langCode: string) {
+    const prevLang = locale.value;
     preferences.value.language = langCode;
     locale.value = langCode;
+
+    // 如果切换为简体中文，且尚未初始化中文位置与标签，弹出提示引导一键生成
+    if (langCode === "zh-CN" && prevLang !== "zh-CN") {
+      const hasChinese = await presets.hasChinesePresets();
+      if (!hasChinese) {
+        toast("已切换为简体中文", {
+          description: "检测到尚未生成适合中国家庭的常用存放位置与分类标签，是否立即生成？（已有英文数据将严格保持原样）",
+          action: {
+            label: "立即生成",
+            onClick: async () => {
+              await presets.initializeChinesePresets();
+            },
+          },
+          duration: 8000,
+        });
+      }
+    }
   }
 </script>
 

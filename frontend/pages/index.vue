@@ -298,6 +298,7 @@
               <TooltipContent>{{ $t("global.read_docs") }}</TooltipContent>
             </Tooltip>
 
+            <QuickLanguageToggle class="z-10" />
             <LanguageSelector class="z-10 text-primary" :expanded="false" />
           </div>
         </TooltipProvider>

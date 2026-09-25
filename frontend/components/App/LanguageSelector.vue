@@ -6,7 +6,11 @@
   import { fmtDate } from "~~/composables/use-formatters";
   import { useViewPreferences } from "~~/composables/use-preferences";
 
+  import { toast } from "@/components/ui/sonner";
+  import { useLocalizedPresets } from "~~/composables/use-localized-presets";
+
   const preferences = useViewPreferences();
+  const presets = useLocalizedPresets();
 
   const locales = Object.values(Locales).map(l => {
     return {
@@ -23,8 +27,25 @@
     },
   });
 
-  function setLanguage(lang: string) {
+  async function setLanguage(lang: string) {
+    const prevLang = preferences.value.language;
     preferences.value.language = lang;
+
+    if (lang === "zh-CN" && prevLang !== "zh-CN") {
+      const hasChinese = await presets.hasChinesePresets();
+      if (!hasChinese) {
+        toast("已切换为简体中文", {
+          description: "检测到尚未生成适合中国家庭的常用存放位置与分类标签，是否立即生成？（已有英文数据将严格保持原样）",
+          action: {
+            label: "立即生成",
+            onClick: async () => {
+              await presets.initializeChinesePresets();
+            },
+          },
+          duration: 8000,
+        });
+      }
+    }
   }
 
   function setOverrideLocale(locale: string | undefined) {

@@ -32,6 +32,7 @@ export type LocationViewPreferences = {
   quickActions: {
     enabled: boolean;
   };
+  languageOnboardingCompleted?: boolean;
 };
 export type PreferenceSyncConfig = Partial<Record<keyof LocationViewPreferences, boolean>>;
 type PreferenceChange = true | Record<string, PreferenceChange>;
@@ -48,6 +49,7 @@ const DEFAULT_PREFERENCES: LocationViewPreferences = {
   legacyImageFit: false,
   language: null,
   overrideFormatLocale: null,
+  languageOnboardingCompleted: false,
   duplicateSettings: {
     copyMaintenance: false,
     copyAttachments: true,

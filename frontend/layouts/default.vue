@@ -16,6 +16,7 @@
     <CollectionCreateModal />
     <CollectionJoinModal />
     <CollectionInviteCreateModal />
+    <AppOnboardingLanguageModal />
     <SidebarProvider :default-open="sidebarState">
       <Sidebar collapsible="icon">
         <SidebarHeader class="items-center">

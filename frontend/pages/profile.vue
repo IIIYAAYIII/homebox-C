@@ -8,6 +8,8 @@
   import MdiFill from "~icons/mdi/fill";
   import MdiKeyVariant from "~icons/mdi/key-variant";
   import MdiContentCopy from "~icons/mdi/content-copy";
+  import MdiHomeCityOutline from "~icons/mdi/home-city-outline";
+  import MdiPlus from "~icons/mdi/plus";
   import { Button } from "@/components/ui/button";
   import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
   import { useDialog } from "@/components/ui/dialog-provider";
@@ -48,6 +50,9 @@
   function setLegacyImageFit() {
     preferences.value.legacyImageFit = !preferences.value.legacyImageFit;
   }
+
+  const presets = useLocalizedPresets();
+  const presetStats = computed(() => presets.getPresetsStatistics());
 
   const auth = useAuthContext();
 
@@ -374,6 +379,56 @@
           </div>
         </div>
         <LanguageSelector />
+      </BaseCard>
+
+      <BaseCard>
+        <template #title>
+          <BaseSectionHeader>
+            <MdiHomeCityOutline class="-mt-1 mr-2" />
+            <span>{{ $t("profile.preset_section_title") }}</span>
+            <template #description>{{ $t("profile.preset_section_sub") }}</template>
+          </BaseSectionHeader>
+        </template>
+
+        <div class="px-4 pb-4 space-y-3">
+          <div class="rounded-lg border bg-muted/30 p-3.5 space-y-2">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span class="text-sm font-medium text-foreground">
+                数据状态：
+              </span>
+              <div class="flex flex-wrap gap-2 text-xs">
+                <span class="px-2 py-0.5 rounded bg-primary/10 text-primary font-medium">
+                  中文存放位置: {{ presetStats.chineseLocations }}
+                </span>
+                <span class="px-2 py-0.5 rounded bg-primary/10 text-primary font-medium">
+                  中文分类标签: {{ presetStats.chineseTags }}
+                </span>
+                <span v-if="presetStats.otherLocations > 0" class="px-2 py-0.5 rounded bg-muted text-muted-foreground">
+                  英文/其他位置: {{ presetStats.otherLocations }} (保留原样)
+                </span>
+                <span v-if="presetStats.otherTags > 0" class="px-2 py-0.5 rounded bg-muted text-muted-foreground">
+                  英文/其他标签: {{ presetStats.otherTags }} (保留原样)
+                </span>
+              </div>
+            </div>
+            <p class="text-xs text-muted-foreground leading-relaxed">
+              {{ $t("profile.preset_description") }}
+            </p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2 pt-1">
+            <Button
+              variant="secondary"
+              size="sm"
+              :disabled="presets.isInitializing.value"
+              @click="presets.initializeChinesePresets()"
+            >
+              <MdiLoading v-if="presets.isInitializing.value" class="mr-1.5 size-4 animate-spin" />
+              <MdiPlus v-else class="mr-1.5 size-4" />
+              <span>{{ $t("profile.preset_init_btn") }}</span>
+            </Button>
+          </div>
+        </div>
       </BaseCard>
 
       <BaseCard>

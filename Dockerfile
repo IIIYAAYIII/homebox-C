@@ -71,6 +71,7 @@ ENV HBOX_MODE=production
 ENV HBOX_STORAGE_CONN_STRING=file:///?no_tmp_dir=true
 ENV HBOX_STORAGE_PREFIX_PATH=data
 ENV HBOX_DATABASE_SQLITE_PATH=/data/homebox.db?_pragma=busy_timeout=2000&_pragma=journal_mode=WAL&_fk=1&_time_format=sqlite
+ENV HBOX_AUTH_API_KEY_PEPPER=homebox_default_secret_pepper_min_32_bytes_safe_fallback
 
 # Install necessary runtime dependencies
 RUN apk --no-cache add ca-certificates wget mosquitto-clients && \

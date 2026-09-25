@@ -40,14 +40,15 @@
 
     // 如果切换为简体中文，且尚未初始化中文位置与标签，弹出提示引导一键生成
     if (langCode === "zh-CN" && prevLang !== "zh-CN") {
+      preferences.value.overrideFormatLocale = "zh-CN";
       const hasChinese = await presets.hasChinesePresets();
       if (!hasChinese) {
         toast("已切换为简体中文", {
-          description: "检测到尚未生成适合中国家庭的常用存放位置与分类标签，是否立即生成？（已有英文数据将严格保持原样）",
+          description: "是否同步将货币设为人民币(CNY - ¥)并生成常用中文存放位置与标签？（已有英文数据将严格保持原样）",
           action: {
-            label: "立即生成",
+            label: "立即同步",
             onClick: async () => {
-              await presets.initializeChinesePresets();
+              await presets.initializeChinesePresets({ updateCurrency: true, updateLocaleFormat: true });
             },
           },
           duration: 8000,

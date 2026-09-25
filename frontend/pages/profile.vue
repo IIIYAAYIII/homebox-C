@@ -53,6 +53,42 @@
 
   const presets = useLocalizedPresets();
   const presetStats = computed(() => presets.getPresetsStatistics());
+  const currentGroup = ref<{ name: string; currency: string } | null>(null);
+
+  onMounted(async () => {
+    try {
+      const { data } = await api.group.get();
+      if (data) {
+        currentGroup.value = data;
+      }
+    } catch {
+      // ignore
+    }
+  });
+
+  async function setChinesePresetsWithCurrency() {
+    await presets.initializeChinesePresets({ updateCurrency: true, updateLocaleFormat: true });
+    try {
+      const { data } = await api.group.get();
+      if (data) {
+        currentGroup.value = data;
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  async function switchToRMB() {
+    await presets.updateGroupCurrency("CNY");
+    try {
+      const { data } = await api.group.get();
+      if (data) {
+        currentGroup.value = data;
+      }
+    } catch {
+      // ignore
+    }
+  }
 
   const auth = useAuthContext();
 
@@ -394,9 +430,15 @@
           <div class="rounded-lg border bg-muted/30 p-3.5 space-y-2">
             <div class="flex flex-wrap items-center justify-between gap-2">
               <span class="text-sm font-medium text-foreground">
-                数据状态：
+                本地化信息联动状态：
               </span>
               <div class="flex flex-wrap gap-2 text-xs">
+                <span class="px-2 py-0.5 rounded bg-amber-500/15 text-amber-700 dark:text-amber-300 font-medium">
+                  结算货币: {{ currentGroup?.currency?.toUpperCase() || 'CNY' }} ({{ currentGroup?.currency?.toUpperCase() === 'CNY' ? '人民币 ¥' : '其他' }})
+                </span>
+                <span class="px-2 py-0.5 rounded bg-blue-500/15 text-blue-700 dark:text-blue-300 font-medium">
+                  日期格式: {{ preferences.overrideFormatLocale || preferences.language || 'zh-CN' }}
+                </span>
                 <span class="px-2 py-0.5 rounded bg-primary/10 text-primary font-medium">
                   中文存放位置: {{ presetStats.chineseLocations }}
                 </span>
@@ -421,11 +463,19 @@
               variant="secondary"
               size="sm"
               :disabled="presets.isInitializing.value"
-              @click="presets.initializeChinesePresets()"
+              @click="setChinesePresetsWithCurrency"
             >
               <MdiLoading v-if="presets.isInitializing.value" class="mr-1.5 size-4 animate-spin" />
               <MdiPlus v-else class="mr-1.5 size-4" />
               <span>{{ $t("profile.preset_init_btn") }}</span>
+            </Button>
+            <Button
+              v-if="currentGroup && currentGroup.currency?.toUpperCase() !== 'CNY'"
+              variant="outline"
+              size="sm"
+              @click="switchToRMB"
+            >
+              <span>切换货币为人民币 (CNY - ¥)</span>
             </Button>
           </div>
         </div>

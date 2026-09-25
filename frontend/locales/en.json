@@ -783,8 +783,8 @@
         "title": "Welcome to HomeBox",
         "subtitle": "First-time setup · Select your language and initial configuration",
         "select_language": "Select System Language",
-        "preset_success": "Successfully generated {locations} storage locations and {tags} category tags! Existing data is safely preserved.",
-        "preset_already_exists": "Household locations and tags already exist. Existing data was kept intact."
+        "preset_success": "Successfully generated {locations} storage locations and {tags} category tags! Currency set to CNY and date format updated. Existing data is safely preserved.",
+        "preset_already_exists": "Household locations, tags, and CNY currency are already configured. Existing data was kept intact."
     },
     "pages": {
         "templates": {

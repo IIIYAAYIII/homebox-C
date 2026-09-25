@@ -7,6 +7,8 @@ import { useTagStore } from "~/stores/tags";
 import { useEntityTypeStore } from "~/stores/entityTypes";
 import { useViewPreferences } from "~/composables/use-preferences";
 import { useAuthContext } from "~/composables/use-auth-context";
+import { setCurrency } from "~/composables/use-formatters";
+import { useCollections } from "~/composables/use-collections";
 
 export interface LocalizedLocationPreset {
   name: string;
@@ -105,30 +107,99 @@ export function useLocalizedPresets() {
       chineseTags: chineseTagCount,
       otherLocations: englishLocCount,
       otherTags: englishTagCount,
+      localeCode: preferences.value.overrideFormatLocale || preferences.value.language || "zh-CN",
     };
   }
 
   /**
-   * 生成中文存放位置与标签
+   * 更新当前资产库货币单位
+   */
+  async function updateGroupCurrency(currency = "CNY") {
+    try {
+      const { data: group } = await api.group.get();
+      if (group) {
+        await api.group.update(
+          {
+            name: group.name,
+            currency: currency.toUpperCase(),
+          },
+          group.id
+        );
+        setCurrency(currency.toUpperCase());
+        toast.success(`货币单位已成功更新为 ${currency.toUpperCase()}`);
+      }
+    } catch (e) {
+      console.error("Failed to update group currency:", e);
+      toast.error("更新货币失败，请重试");
+    }
+  }
+
+  /**
+   * 生成中文存放位置与标签，并同步货币与区域格式
    * 核心原则：安全无破坏性，严格保留原有英文及自定义存放位置和标签！
    */
   async function initializeChinesePresets(options?: {
     showToasts?: boolean;
+    updateCurrency?: boolean;
+    updateLocaleFormat?: boolean;
   }) {
     if (isInitializing.value) return;
     isInitializing.value = true;
 
     const showToasts = options?.showToasts ?? true;
+    const shouldUpdateCurrency = options?.updateCurrency ?? true;
+    const shouldUpdateLocaleFormat = options?.updateLocaleFormat ?? true;
 
     try {
-      // 1. 确保获取最新数据
+      // 1. 同步设置货币为 人民币 (CNY - ¥)
+      let currencyChanged = false;
+      if (shouldUpdateCurrency) {
+        try {
+          const { data: group } = await api.group.get();
+          if (group) {
+            let newName = group.name;
+            // 自动优化默认资产库名称：如果以 "'s Home" 结尾，转为中文 "xx的家"
+            if (newName.endsWith("'s Home")) {
+              const prefix = newName.replace(/'s Home$/, "");
+              newName = `${prefix}的家`;
+            }
+
+            if (group.currency?.toUpperCase() !== "CNY" || newName !== group.name) {
+              await api.group.update(
+                {
+                  name: newName,
+                  currency: "CNY",
+                },
+                group.id
+              );
+              currencyChanged = true;
+            }
+            setCurrency("CNY");
+          }
+        } catch (e) {
+          console.warn("Could not auto-update currency to CNY:", e);
+        }
+      }
+
+      // 2. 同步设置日期与数字格式为 中文标准 (zh-CN)
+      if (shouldUpdateLocaleFormat) {
+        preferences.value.overrideFormatLocale = "zh-CN";
+        if (
+          !preferences.value.duplicateSettings.copyPrefixOverride ||
+          preferences.value.duplicateSettings.copyPrefixOverride.startsWith("Copy")
+        ) {
+          preferences.value.duplicateSettings.copyPrefixOverride = "副本 - ";
+        }
+      }
+
+      // 3. 确保获取最新位置与标签数据
       await Promise.all([
         entityTypeStore.ensureFetched(),
         locationStore.refreshChildren(),
         tagStore.refresh(),
       ]);
 
-      // 2. 获取位置实体类型 ID
+      // 4. 获取位置实体类型 ID
       const locationType =
         entityTypeStore.locationTypes[0] ||
         entityTypeStore.allTypes.find(t => t.isLocation);
@@ -138,7 +209,7 @@ export function useLocalizedPresets() {
         throw new Error("Unable to find default location entity type");
       }
 
-      // 3. 安全获取现有名称，确保不重复创建，更不覆盖原有数据
+      // 5. 安全获取现有名称，确保不重复创建，更不覆盖原有数据
       const existingLocNames = new Set(
         (locationStore.allLocations || []).map(l => l.name.trim().toLowerCase())
       );
@@ -149,7 +220,7 @@ export function useLocalizedPresets() {
       let locationsCreated = 0;
       let tagsCreated = 0;
 
-      // 4. 创建中文存放位置（已存在同名则跳过）
+      // 6. 创建中文存放位置（已存在同名则跳过）
       for (const loc of CHINESE_LOCATION_PRESETS) {
         if (!existingLocNames.has(loc.name.trim().toLowerCase())) {
           try {
@@ -170,7 +241,7 @@ export function useLocalizedPresets() {
         }
       }
 
-      // 5. 创建中文分类标签（已存在同名则跳过）
+      // 7. 创建中文分类标签（已存在同名则跳过）
       for (const tag of CHINESE_TAG_PRESETS) {
         if (!existingTagNames.has(tag.name.trim().toLowerCase())) {
           try {
@@ -190,24 +261,24 @@ export function useLocalizedPresets() {
         }
       }
 
-      // 6. 刷新前端 Store，使用户立即可见
+      // 8. 刷新前端 Store，使用户立即可见
       await Promise.all([
         locationStore.refreshParents(),
         locationStore.refreshChildren(),
         tagStore.refresh(),
       ]);
 
-      // 7. 标记配置完成
+      // 9. 标记配置完成
       markOnboardingCompleted();
 
       if (showToasts) {
-        if (locationsCreated > 0 || tagsCreated > 0) {
+        if (locationsCreated > 0 || tagsCreated > 0 || currencyChanged) {
           toast.success(
             t("onboarding.preset_success", {
               locations: locationsCreated,
               tags: tagsCreated,
             }) ||
-              `成功生成 ${locationsCreated} 个常用存放位置与 ${tagsCreated} 个常用标签！原有数据保持原样安全保留。`
+              `成功生成 ${locationsCreated} 个常用存放位置与 ${tagsCreated} 个常用标签，货币与日期格式已同步完成！原有数据保持原样安全保留。`
           );
         } else {
           toast.info(
@@ -220,6 +291,7 @@ export function useLocalizedPresets() {
       return {
         locationsCreated,
         tagsCreated,
+        currencyChanged,
       };
     } catch (err) {
       console.error("Failed to initialize Chinese presets", err);
@@ -264,6 +336,7 @@ export function useLocalizedPresets() {
     hasChinesePresets,
     getPresetsStatistics,
     initializeChinesePresets,
+    updateGroupCurrency,
     markOnboardingCompleted,
     isOnboardingCompleted,
     CHINESE_LOCATION_PRESETS,

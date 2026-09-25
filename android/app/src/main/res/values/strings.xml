@@ -1,0 +1,74 @@
+<resources>
+    <string name="app_name">Homebox</string>
+
+    <!-- Server Setup -->
+    <string name="server_setup_title">Homebox Server</string>
+    <string name="server_setup_desc">Enter the local LAN address of your Homebox Docker instance.</string>
+    <string name="server_address_hint">Server Address (e.g. http://192.168.1.100:7745)</string>
+    <string name="btn_test_connection">Test Connection</string>
+    <string name="btn_continue">Continue to Login</string>
+    <string name="server_status_checking">Connecting to server…</string>
+    <string name="server_status_ok">Connected successfully! Version: %s</string>
+    <string name="server_status_failed">Failed to connect. Please check IP, port, and network.</string>
+
+    <!-- Login -->
+    <string name="login_title">Account Login</string>
+    <string name="login_subtitle">Sign in to your Homebox instance</string>
+    <string name="email_hint">Email Address</string>
+    <string name="password_hint">Password</string>
+    <string name="btn_login">Sign In</string>
+    <string name="btn_change_server">Change Server Address</string>
+    <string name="login_failed">Login failed. Please check your credentials.</string>
+    <string name="logging_in">Signing in…</string>
+
+    <!-- Navigation -->
+    <string name="nav_items">Items</string>
+    <string name="nav_locations">Locations</string>
+    <string name="nav_scanner">Scan</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Items -->
+    <string name="search_hint">Search items, models, serials…</string>
+    <string name="no_items_found">No items found</string>
+    <string name="no_items_desc">Tap the + button to create your first item.</string>
+    <string name="item_quantity">Qty: %d</string>
+    <string name="item_location">Location: %s</string>
+    <string name="btn_create_item">New Item</string>
+    <string name="item_name_hint">Item Name *</string>
+    <string name="item_desc_hint">Description</string>
+    <string name="item_quantity_hint">Quantity</string>
+    <string name="item_model_hint">Model Number</string>
+    <string name="item_serial_hint">Serial Number / Barcode</string>
+    <string name="item_price_hint">Purchase Price</string>
+    <string name="item_location_hint">Location (Optional)</string>
+    <string name="btn_scan_barcode">Scan Barcode</string>
+    <string name="btn_save">Save</string>
+    <string name="item_created_success">Item created successfully!</string>
+    <string name="item_deleted_success">Item deleted successfully!</string>
+    <string name="item_delete_confirm">Are you sure you want to delete this item? This action cannot be undone.</string>
+
+    <!-- Details -->
+    <string name="details_title">Item Details</string>
+    <string name="btn_edit">Edit</string>
+    <string name="btn_delete">Delete</string>
+    <string name="section_details">Information</string>
+    <string name="section_warranty">Warranty &amp; Service</string>
+
+    <!-- Locations -->
+    <string name="locations_title">Storage Locations</string>
+    <string name="no_locations_found">No storage locations found</string>
+    <string name="btn_create_location">New Location</string>
+    <string name="location_name_hint">Location Name *</string>
+
+    <!-- Scanner -->
+    <string name="scanner_title">Scan QR / Barcode</string>
+    <string name="scanner_prompt">Point camera at QR Code or Barcode</string>
+    <string name="scanner_not_found">No matching item found for scanned code: %s</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_current_server">Current Server</string>
+    <string name="settings_current_user">Logged in as</string>
+    <string name="btn_logout">Log Out</string>
+    <string name="logout_confirm">Are you sure you want to log out?</string>
+</resources>

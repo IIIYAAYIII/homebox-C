@@ -1,0 +1,104 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type'
+        required: false
+        default: 'release'
+        type: choice
+        options:
+          - release
+          - debug
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - 'v*.*.*'
+      - 'android-v*.*.*'
+    paths:
+      - 'android/**'
+      - '.github/workflows/android-build.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Prepare Signing Keystore
+        id: prepare_keystore
+        run: |
+          if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
+            echo "Release keystore secret detected. Decoding..."
+            mkdir -p android/keystore
+            echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/keystore/release.keystore
+            echo "KEYSTORE_PATH=../keystore/release.keystore" >> $GITHUB_ENV
+            echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD || 'HomeboxRelease@2026' }}" >> $GITHUB_ENV
+            echo "KEY_ALIAS=${{ secrets.KEY_ALIAS || 'homebox' }}" >> $GITHUB_ENV
+            echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD || 'HomeboxRelease@2026' }}" >> $GITHUB_ENV
+            echo "has_keystore=true" >> $GITHUB_OUTPUT
+          else
+            echo "Notice: KEYSTORE_BASE64 not set in GitHub Secrets. Using debug signature."
+            echo "has_keystore=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build APK with Gradle
+        run: |
+          chmod +x android/gradlew
+          cd android
+          if [ "${{ inputs.build_type }}" = "debug" ]; then
+            ./gradlew assembleDebug --stacktrace
+          else
+            ./gradlew assembleRelease --stacktrace
+          fi
+
+      - name: Locate and Rename Output APK
+        id: locate_apk
+        run: |
+          if [ "${{ inputs.build_type }}" = "debug" ]; then
+            ORIGINAL_APK=$(find android/app/build/outputs/apk/debug/ -name "*.apk" | head -n 1)
+          else
+            ORIGINAL_APK=$(find android/app/build/outputs/apk/release/ -name "*.apk" | head -n 1)
+          fi
+          
+          if [ -z "$ORIGINAL_APK" ]; then
+            echo "Error: APK not found!"
+            exit 1
+          fi
+
+          VERSION_NAME="${{ github.ref_name }}"
+          DEST_APK="Homebox-${VERSION_NAME//\//-}.apk"
+          cp "$ORIGINAL_APK" "$DEST_APK"
+          echo "Output APK: $DEST_APK"
+          echo "apk_path=$DEST_APK" >> $GITHUB_OUTPUT
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.locate_apk.outputs.apk_path }}
+          path: ${{ steps.locate_apk.outputs.apk_path }}
+          retention-days: 30
+
+      - name: Release APK on Tag
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ steps.locate_apk.outputs.apk_path }}
+          generate_release_notes: true

@@ -153,6 +153,12 @@
         </SidebarContent>
 
         <SidebarFooter>
+          <div class="flex items-center justify-between px-2 py-1 group-data-[collapsible=icon]:justify-center">
+            <span class="text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
+              {{ $t("profile.language") || "Language" }}
+            </span>
+            <AppQuickLanguageToggle />
+          </div>
           <SidebarMenuButton
             class="flex justify-center group-data-[collapsible=icon]:justify-start group-data-[collapsible=icon]:bg-destructive group-data-[collapsible=icon]:text-destructive-foreground group-data-[collapsible=icon]:shadow-sm group-data-[collapsible=icon]:hover:bg-destructive/90"
             :tooltip="$t('global.sign_out')"
@@ -205,6 +211,9 @@
                 <Button size="icon" @click="openScanner">
                   <MdiQrcodeScan />
                 </Button>
+              </div>
+              <div>
+                <AppQuickLanguageToggle />
               </div>
             </div>
           </div>
@@ -300,6 +309,7 @@
   import CollectionCreateModal from "~/components/Collection/CreateModal.vue";
   import CollectionJoinModal from "~/components/Collection/JoinModal.vue";
   import CollectionInviteCreateModal from "~/components/Collection/InviteCreateModal.vue";
+  import AppQuickLanguageToggle from "~/components/App/QuickLanguageToggle.vue";
 
   const { t, locale } = useI18n();
   const username = computed(() => authCtx.user?.name || "User");

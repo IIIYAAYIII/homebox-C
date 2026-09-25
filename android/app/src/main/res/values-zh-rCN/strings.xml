@@ -1,0 +1,74 @@
+<resources>
+    <string name="app_name">Homebox</string>
+
+    <!-- 服务器设置 -->
+    <string name="server_setup_title">Homebox 本地服务器</string>
+    <string name="server_setup_desc">请输入局域网中运行 Homebox Docker 容器的服务器地址。</string>
+    <string name="server_address_hint">服务器地址 (例如 http://192.168.1.100:7745)</string>
+    <string name="btn_test_connection">测试连接</string>
+    <string name="btn_continue">进入登录</string>
+    <string name="server_status_checking">正在连接服务器…</string>
+    <string name="server_status_ok">连接成功！服务版本: %s</string>
+    <string name="server_status_failed">连接失败，请检查局域网 IP、端口与服务状态。</string>
+
+    <!-- 登录 -->
+    <string name="login_title">账号登录</string>
+    <string name="login_subtitle">登录到您的 Homebox 资产管理系统</string>
+    <string name="email_hint">登录邮箱</string>
+    <string name="password_hint">密码</string>
+    <string name="btn_login">立即登录</string>
+    <string name="btn_change_server">更换服务器地址</string>
+    <string name="login_failed">登录失败，请检查账号邮箱或密码。</string>
+    <string name="logging_in">正在登录中…</string>
+
+    <!-- 底部导航 -->
+    <string name="nav_items">资产物品</string>
+    <string name="nav_locations">存放位置</string>
+    <string name="nav_scanner">扫码盘点</string>
+    <string name="nav_settings">系统设置</string>
+
+    <!-- 物品与资产 -->
+    <string name="search_hint">搜索物品名称、型号、序列号…</string>
+    <string name="no_items_found">暂无物品记录</string>
+    <string name="no_items_desc">点击右下角“+”按钮录入您的第一件物品吧！</string>
+    <string name="item_quantity">数量: %d</string>
+    <string name="item_location">存放位置: %s</string>
+    <string name="btn_create_item">录入新物品</string>
+    <string name="item_name_hint">物品名称 *</string>
+    <string name="item_desc_hint">物品详细描述</string>
+    <string name="item_quantity_hint">库存数量</string>
+    <string name="item_model_hint">规格型号</string>
+    <string name="item_serial_hint">序列号 (SN) / 条形码</string>
+    <string name="item_price_hint">购入价格 (¥)</string>
+    <string name="item_location_hint">存放位置库位 (可选)</string>
+    <string name="btn_scan_barcode">扫条码填入</string>
+    <string name="btn_save">保存</string>
+    <string name="item_created_success">物品录入成功！</string>
+    <string name="item_deleted_success">物品已删除！</string>
+    <string name="item_delete_confirm">确定要删除该物品吗？此操作无法撤销。</string>
+
+    <!-- 详情 -->
+    <string name="details_title">资产详情</string>
+    <string name="btn_edit">编辑</string>
+    <string name="btn_delete">删除</string>
+    <string name="section_details">基本规格信息</string>
+    <string name="section_warranty">保修与维保</string>
+
+    <!-- 存放位置 -->
+    <string name="locations_title">存放位置与库位</string>
+    <string name="no_locations_found">暂无存放位置记录</string>
+    <string name="btn_create_location">新建位置</string>
+    <string name="location_name_hint">存放位置名称 *</string>
+
+    <!-- 扫码 -->
+    <string name="scanner_title">扫码快速识别</string>
+    <string name="scanner_prompt">请将摄像头对准资产标签二维码或商品条形码</string>
+    <string name="scanner_not_found">未匹配到包含该条码的资产: %s</string>
+
+    <!-- 设置 -->
+    <string name="settings_title">系统设置</string>
+    <string name="settings_current_server">当前服务器</string>
+    <string name="settings_current_user">当前用户</string>
+    <string name="btn_logout">退出登录</string>
+    <string name="logout_confirm">确定要退出当前账号吗？</string>
+</resources>

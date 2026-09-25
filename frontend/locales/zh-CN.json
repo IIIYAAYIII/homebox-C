@@ -2,8 +2,8 @@
     "collection": {
         "copy_invite": "复制邀请链接",
         "create_invite": "创建邀请",
-        "delete_collection": "删除集合",
-        "delete_confirm": "确定要删除此集合吗？此操作无法撤销。",
+        "delete_collection": "删除资产库",
+        "delete_confirm": "确定要删除此资产库吗？此操作无法撤销。",
         "deleted_collection": "集合已删除。",
         "expires_at": "失效时间",
         "invite_token": "令牌",
@@ -11,10 +11,10 @@
         "invite_token_warning": "邀请令牌仅显示一次。请立刻复制链接；离开或刷新此页面后，你将无法再次查看该令牌。",
         "invites": "邀请",
         "invites_delete_confirm": "确定要删除此邀请吗？",
-        "leave_collection": "离开集合",
-        "leave_confirm": "确定要离开该集合吗？",
+        "leave_collection": "离开资产库",
+        "leave_confirm": "确定要离开此资产库吗？",
         "left_collection": "您已离开集合。",
-        "manage_collection": "管理集合",
+        "manage_collection": "管理资产库",
         "members": {
             "cannot_remove_last": "您不能删除最后一个成员。",
             "email": "邮箱",
@@ -27,20 +27,20 @@
             "role": "角色"
         },
         "no_collections": {
-            "create": "创建新集合",
-            "join": "加入现有集合",
-            "message": "您似乎不属于任何集合。为你的物品创建一个新的集合，或者加入一个已邀请您的集合。",
-            "title": "未找到集合"
+            "create": "新建资产库",
+            "join": "加入已有资产库",
+            "message": "您当前未加入任何资产库。请新建一个资产库以管理物品，或者接受邀请加入已有资产库。",
+            "title": "未找到资产库"
         },
         "no_invites": "没有邀请",
         "remaining_uses": "剩余可用次数",
         "tabs": {
-            "entity_types": "实体类型",
+            "entity_types": "分类与类型",
             "invites": "邀请",
             "members": "成员",
-            "notifiers": "通知器",
+            "notifiers": "通知渠道",
             "settings": "设置",
-            "tools": "工具"
+            "tools": "实用工具"
         },
         "uses": "可用次数"
     },
@@ -173,7 +173,8 @@
                 "qr_tooltip": "显示二维码"
             },
             "password_score": {
-                "password_strength": "密码强度"
+                "password_strength": "密码强度",
+                "does_not_meet_requirement": "密码强度未达到安全要求"
             }
         },
         "item": {
@@ -300,7 +301,8 @@
             },
             "tree": {
                 "no_locations": "没有可用的位置。点击创建按钮新增位置。"
-            }
+            },
+            "create_item": "在此位置添加物品"
         },
         "quick_menu": {
             "no_results": "未找到结果。",
@@ -391,6 +393,86 @@
                 "updated": "模板已更新"
             },
             "using_template": "使用模板： {name}"
+        },
+        "entity": {
+            "create_modal": {
+                "clear_template": "清空模板",
+                "delete_photo": "删除照片",
+                "entity_description": "{type} 描述",
+                "entity_name": "{type} 名称",
+                "entity_photo": "{type} 照片 📷",
+                "entity_quantity": "{type} 数量",
+                "item_selector_no_results_text": "输入关键词以搜索…",
+                "parent_item": "所属父级物品",
+                "product_tooltip_input_barcode": "手动输入条形码自动填充",
+                "product_tooltip_scan_barcode": "使用相机 📷 扫描条码自动填充",
+                "rotate_photo": "旋转照片",
+                "set_as_primary_photo": "设为{ isPrimary, select, true {非} false {} other {}}主图",
+                "toast": {
+                    "already_creating": "正在创建 {type} 中",
+                    "create_failed": "创建 {type} 失败",
+                    "create_success": "{type} 创建成功",
+                    "failed_load_parent": "加载父级物品失败，请手动选择",
+                    "no_canvas_support": "您的浏览器不支持画布操作",
+                    "please_select_entity_type": "请选择物品/实体类型。",
+                    "please_select_location": "请选择存放位置。",
+                    "rotate_failed": "照片旋转失败: { error }",
+                    "rotate_process_failed": "处理旋转后的照片失败",
+                    "some_photos_failed": "{count, plural, =0 {没有需要上传的照片。} =1 {有 1 张照片上传失败。} other {部分照片上传失败。}}",
+                    "upload_failed": "上传照片失败: { photoName }",
+                    "upload_success": "{count, plural, =0 {未上传照片。} =1 {照片上传成功！} other {所有照片上传成功！}}",
+                    "uploading_photos": "{count, plural, =0 {无待上传照片} =1 {正在上传 1 张照片…} other {正在上传 {count} 张照片…}}"
+                },
+                "upload_photos": "上传照片",
+                "uploaded": "已上传照片"
+            },
+            "selector": {
+                "placeholder": "请选择类型…"
+            }
+        },
+        "entityTypes": {
+            "card": {
+                "actions": {
+                    "delete": "删除"
+                },
+                "badge_container": "容器",
+                "default_template": "默认模板: {name}",
+                "tooltip": {
+                    "delete": "删除",
+                    "edit": "编辑"
+                }
+            },
+            "confirm": {
+                "convert_item_to_location": "将物品类型转换为库位容器类型会导致使用该类型的现有实体丢失专有字段。确定要继续吗？",
+                "delete_entity_type": "确定要删除实体类型 \"{name}\" 吗？"
+            },
+            "create_dialog": {
+                "button": "创建",
+                "is_container_location_type_label": "属于容器 / 库位类型",
+                "name_label": "类型名称",
+                "title": "创建实体分类类型"
+            },
+            "page": {
+                "create": "新建分类",
+                "empty_button": "创建首个分类",
+                "empty_title": "暂未定义任何实体分类类型。",
+                "title": "实体与物品分类"
+            },
+            "toasts": {
+                "create_failed": "创建实体分类失败",
+                "create_success": "实体分类创建成功",
+                "delete_confirm_failed": "删除实体分类失败，请确保当前没有物品或位置在使用它。",
+                "delete_success": "实体分类已删除",
+                "name_required": "类型名称为必填项",
+                "update_failed": "更新实体分类失败",
+                "update_success": "实体分类更新成功"
+            },
+            "update_dialog": {
+                "button": "保存更改",
+                "is_container_location_type_label": "属于容器 / 库位类型",
+                "name_label": "类型名称",
+                "title": "编辑实体分类类型"
+            }
         }
     },
     "errors": {
@@ -449,7 +531,11 @@
         "value": "值",
         "version": "版本：{version}",
         "welcome": "欢迎，{username}",
-        "yes": "是"
+        "yes": "是",
+        "entity": "实体",
+        "entity_type": "实体类型",
+        "item": "物品",
+        "location": "存放位置"
     },
     "home": {
         "quick_statistics": "快速统计",
@@ -539,7 +625,8 @@
                 "select_type": "选择类型",
                 "title": "附件编辑"
             },
-            "view_image": "查看图片"
+            "view_image": "查看图片",
+            "change_entity_type_confirm": "更改实体类型可能导致新旧类型不通用的属性字段数据丢失。确定要更改吗？"
         },
         "edit_details": "编辑详情",
         "field": "字段",
@@ -620,12 +707,17 @@
             "item_deleted": "物品已删除",
             "item_saved": "物品已保存",
             "quantity_cannot_negative": "数量不能为负",
-            "sync_child_location": "所选的父项会将其所有子项的位置同步到同一位置。位置已更新。"
+            "sync_child_location": "所选的父项会将其所有子项的位置同步到同一位置。位置已更新。",
+            "attachment_too_large": "附件文件过大：超出了服务器允许的上传大小限制"
         },
         "updated_at": "更新于",
         "warranty": "保修",
         "warranty_details": "保修详情",
-        "warranty_expires": "保修持续到"
+        "warranty_expires": "保修持续到",
+        "empty": {
+            "title": "暂无物品记录",
+            "message": "尚未添加任何物品。点击右上角的“新建物品”开始录入吧！"
+        }
     },
     "languages": {
         "bs-BA": "波斯尼亚语（波斯尼亚和黑塞哥维那）",
@@ -660,7 +752,8 @@
         "zh-CN": "中文（简体）",
         "zh-HK": "中文（香港）",
         "zh-MO": "中文（澳门）",
-        "zh-TW": "中文（繁体）"
+        "zh-TW": "中文（繁体）",
+        "en@pirate": "英语 (海盗俚语)"
     },
     "languages.da-DK": "丹麦语",
     "languages.ro-RO": "罗马尼亚语",
@@ -681,7 +774,11 @@
             "location_deleted": "已删除位置",
             "location_updated": "已更新位置"
         },
-        "update_location": "更新位置"
+        "update_location": "更新位置",
+        "empty": {
+            "title": "暂无存放位置",
+            "message": "这里空空如也，点击右上角开始添加第一个存放位置吧！"
+        }
     },
     "maintenance": {
         "filter": {
@@ -803,13 +900,18 @@
             "failed_update_notifier": "更新通知器失败。",
             "group_updated": "已更新群组",
             "notifier_test_success": "通知器测试成功。",
-            "password_changed": "已成功修改密码。"
+            "password_changed": "已成功修改密码。",
+            "failed_logout_all": "注销所有设备失败，请稍后重试。",
+            "logout_all_success": "已成功从所有设备注销登录。"
         },
         "update_group": "更新组",
         "update_language": "更新语言",
         "url": "网址",
         "user_profile": "用户资料",
-        "user_profile_sub": "邀请用户共同管理您的资产。"
+        "user_profile_sub": "邀请用户共同管理您的资产。",
+        "api_key_default_expiration": "若不指定到期日期，密钥将在 30 天后自动失效。",
+        "logout_all_confirm": "这将在包括当前设备在内的所有已登录设备上注销登录，您需要重新登录。是否继续？",
+        "logout_all_devices": "注销所有设备上的登录"
     },
     "reports": {
         "label_generator": {

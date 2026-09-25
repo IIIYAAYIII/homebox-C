@@ -7,18 +7,46 @@ export default defineNuxtPlugin(({ vueApp }) => {
   function checkDefaultLanguage() {
     let matched = null;
     const languages = Object.getOwnPropertyNames(messages());
-    const matching = navigator.languages.filter(lang => languages.some(l => l.toLowerCase() === lang.toLowerCase()));
-    if (matching.length > 0) {
-      matched = matching[0];
-    }
-    if (!matched) {
-      languages.forEach(lang => {
-        const languagePartials = navigator.language.split("-")[0];
-        if (lang.toLowerCase() === languagePartials) {
-          matched = lang;
+    
+    // Check direct matching in navigator.languages
+    if (navigator.languages && navigator.languages.length > 0) {
+      for (const navLang of navigator.languages) {
+        const lower = navLang.toLowerCase();
+        // Exact match
+        const exact = languages.find(l => l.toLowerCase() === lower);
+        if (exact) {
+          return exact;
         }
-      });
+        // Chinese special handling
+        if (lower.startsWith("zh")) {
+          if (lower.includes("tw") || lower.includes("hant")) {
+            return languages.find(l => l.toLowerCase() === "zh-tw") || "zh-TW";
+          }
+          if (lower.includes("hk")) {
+            return languages.find(l => l.toLowerCase() === "zh-hk") || "zh-HK";
+          }
+          return languages.find(l => l.toLowerCase() === "zh-cn") || "zh-CN";
+        }
+        // Prefix match
+        const prefix = lower.split("-")[0];
+        const partial = languages.find(l => l.toLowerCase().split("-")[0] === prefix);
+        if (partial) {
+          return partial;
+        }
+      }
     }
+
+    const currentNav = (navigator.language || "").toLowerCase();
+    if (currentNav.startsWith("zh")) {
+      if (currentNav.includes("tw") || currentNav.includes("hant")) {
+        return languages.find(l => l.toLowerCase() === "zh-tw") || "zh-TW";
+      }
+      return languages.find(l => l.toLowerCase() === "zh-cn") || "zh-CN";
+    }
+
+    const currentPartial = currentNav.split("-")[0];
+    matched = languages.find(l => l.toLowerCase().split("-")[0] === currentPartial);
+
     return matched;
   }
   const preferences = useViewPreferences();

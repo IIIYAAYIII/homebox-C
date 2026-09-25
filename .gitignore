@@ -70,3 +70,11 @@ frontend/test-results/
 frontend/playwright-report/
 frontend/blob-report/
 frontend/playwright/.cache/
+
+# Android Keystore & Signing Secrets
+*.keystore
+*.jks
+*.base64.txt
+android-keystore/
+android/keystore/
+

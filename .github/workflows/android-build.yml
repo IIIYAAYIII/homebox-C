@@ -49,10 +49,10 @@ jobs:
             echo "Release keystore secret detected. Decoding..."
             mkdir -p android/keystore
             echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/keystore/release.keystore
-            echo "KEYSTORE_PATH=../keystore/release.keystore" >> $GITHUB_ENV
-            echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD || 'HomeboxRelease@2026' }}" >> $GITHUB_ENV
+            echo "KEYSTORE_PATH=$GITHUB_WORKSPACE/android/keystore/release.keystore" >> $GITHUB_ENV
+            echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD || 'HbSecure@2026!Key' }}" >> $GITHUB_ENV
             echo "KEY_ALIAS=${{ secrets.KEY_ALIAS || 'homebox' }}" >> $GITHUB_ENV
-            echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD || 'HomeboxRelease@2026' }}" >> $GITHUB_ENV
+            echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD || 'HbSecure@2026!Key' }}" >> $GITHUB_ENV
             echo "has_keystore=true" >> $GITHUB_OUTPUT
           else
             echo "Notice: KEYSTORE_BASE64 not set in GitHub Secrets. Using debug signature."

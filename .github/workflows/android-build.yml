@@ -11,6 +11,16 @@ on:
         options:
           - release
           - debug
+      create_release:
+        description: 'Publish APK to GitHub Releases (发布到项目 Release 页面)'
+        required: false
+        default: true
+        type: boolean
+      release_tag:
+        description: 'Release Tag (版本标签，例如 v1.0.0)'
+        required: false
+        default: 'v1.0.0'
+        type: string
 
 permissions:
   contents: write
@@ -109,7 +119,12 @@ jobs:
             exit 1
           fi
 
-          VERSION_NAME="${{ github.ref_name }}"
+          TAG_VAL="${{ inputs.release_tag }}"
+          if [ -n "$TAG_VAL" ]; then
+            VERSION_NAME="$TAG_VAL"
+          else
+            VERSION_NAME="${{ github.ref_name }}"
+          fi
           DEST_APK="Homebox-${VERSION_NAME//\//-}.apk"
           cp "$ORIGINAL_APK" "$DEST_APK"
           echo "Output APK: $DEST_APK"
@@ -122,9 +137,11 @@ jobs:
           path: ${{ steps.locate_apk.outputs.apk_path }}
           retention-days: 30
 
-      - name: Release APK on Tag
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Publish APK to GitHub Releases
+        if: startsWith(github.ref, 'refs/tags/') || inputs.create_release == true
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || inputs.release_tag || 'v1.0.0' }}
+          name: Homebox Android ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || inputs.release_tag || 'v1.0.0' }}
           files: ${{ steps.locate_apk.outputs.apk_path }}
           generate_release_notes: true

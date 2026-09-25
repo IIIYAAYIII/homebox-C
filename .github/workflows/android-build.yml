@@ -62,8 +62,20 @@ jobs:
             echo "KEYSTORE_PASSWORD=$KEYSTORE_PASS" >> $GITHUB_ENV
             echo "KEY_ALIAS=$KEY_ALIAS_VAL" >> $GITHUB_ENV
             echo "KEY_PASSWORD=$KEY_PASS" >> $GITHUB_ENV
+
+            # Pre-flight check: verify keystore integrity and password with keytool before Gradle runs
+            echo "Verifying keystore integrity and password..."
+            if ! keytool -list -keystore android/keystore/release.keystore -storepass "$KEYSTORE_PASS" > /tmp/keystore_entries.txt 2>&1; then
+              echo "::error::Keystore password verification failed! Please check KEYSTORE_PASSWORD in GitHub Secrets."
+              cat /tmp/keystore_entries.txt
+              exit 1
+            fi
+
+            echo "Keystore verified successfully. Aliases found:"
+            grep -E "(Alias name|Entry type|PrivateKeyEntry)" /tmp/keystore_entries.txt || cat /tmp/keystore_entries.txt
+
             echo "has_keystore=true" >> $GITHUB_OUTPUT
-            echo "Keystore successfully configured."
+            echo "Keystore successfully configured and validated."
           else
             echo "Notice: KEYSTORE_BASE64 not set in GitHub Secrets. Using debug signature."
             echo "has_keystore=false" >> $GITHUB_OUTPUT

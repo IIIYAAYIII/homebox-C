@@ -22,13 +22,21 @@ android {
 
     signingConfigs {
         create("release") {
-            val keystorePath = System.getenv("KEYSTORE_PATH") ?: project.findProperty("KEYSTORE_PATH") as String? ?: "../android-keystore/homebox-release.keystore"
+            val envPath = System.getenv("KEYSTORE_PATH")?.takeIf { it.isNotBlank() }
+            val propPath = (project.findProperty("KEYSTORE_PATH") as? String)?.takeIf { it.isNotBlank() }
+            val keystorePath = envPath ?: propPath ?: "../android-keystore/homebox-release.keystore"
             val keystoreFile = file(keystorePath)
             if (keystoreFile.exists()) {
                 storeFile = keystoreFile
-                storePassword = System.getenv("KEYSTORE_PASSWORD") ?: project.findProperty("KEYSTORE_PASSWORD") as String? ?: "HbSecure@2026!Key"
-                keyAlias = System.getenv("KEY_ALIAS") ?: project.findProperty("KEY_ALIAS") as String? ?: "homebox"
-                keyPassword = System.getenv("KEY_PASSWORD") ?: project.findProperty("KEY_PASSWORD") as String? ?: "HbSecure@2026!Key"
+                storePassword = System.getenv("KEYSTORE_PASSWORD")?.takeIf { it.isNotBlank() }
+                    ?: (project.findProperty("KEYSTORE_PASSWORD") as? String)?.takeIf { it.isNotBlank() }
+                    ?: "HbSecure@2026!Key"
+                keyAlias = System.getenv("KEY_ALIAS")?.takeIf { it.isNotBlank() }
+                    ?: (project.findProperty("KEY_ALIAS") as? String)?.takeIf { it.isNotBlank() }
+                    ?: "homebox"
+                keyPassword = System.getenv("KEY_PASSWORD")?.takeIf { it.isNotBlank() }
+                    ?: (project.findProperty("KEY_PASSWORD") as? String)?.takeIf { it.isNotBlank() }
+                    ?: "HbSecure@2026!Key"
             }
         }
     }

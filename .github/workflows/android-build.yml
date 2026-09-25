@@ -36,16 +36,34 @@ jobs:
 
       - name: Prepare Signing Keystore
         id: prepare_keystore
+        env:
+          RAW_KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          RAW_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          RAW_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          RAW_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          if [ -n "${{ secrets.KEYSTORE_BASE64 }}" ]; then
+          if [ -n "$RAW_KEYSTORE_BASE64" ]; then
             echo "Release keystore secret detected. Decoding..."
             mkdir -p android/keystore
-            echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > android/keystore/release.keystore
+            printf '%s' "$RAW_KEYSTORE_BASE64" | tr -d '\r\n ' | base64 -d > android/keystore/release.keystore
+            
+            if [ ! -s android/keystore/release.keystore ]; then
+              echo "Error: Keystore file is empty after base64 decoding!"
+              exit 1
+            fi
+            
             echo "KEYSTORE_PATH=$GITHUB_WORKSPACE/android/keystore/release.keystore" >> $GITHUB_ENV
-            echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD || 'HbSecure@2026!Key' }}" >> $GITHUB_ENV
-            echo "KEY_ALIAS=${{ secrets.KEY_ALIAS || 'homebox' }}" >> $GITHUB_ENV
-            echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD || 'HbSecure@2026!Key' }}" >> $GITHUB_ENV
+            
+            # Use bash default expansion (${VAR:-default}) to avoid GitHub Actions '||' evaluating to boolean 'true'
+            KEYSTORE_PASS="${RAW_KEYSTORE_PASSWORD:-HbSecure@2026!Key}"
+            KEY_ALIAS_VAL="${RAW_KEY_ALIAS:-homebox}"
+            KEY_PASS="${RAW_KEY_PASSWORD:-HbSecure@2026!Key}"
+            
+            echo "KEYSTORE_PASSWORD=$KEYSTORE_PASS" >> $GITHUB_ENV
+            echo "KEY_ALIAS=$KEY_ALIAS_VAL" >> $GITHUB_ENV
+            echo "KEY_PASSWORD=$KEY_PASS" >> $GITHUB_ENV
             echo "has_keystore=true" >> $GITHUB_OUTPUT
+            echo "Keystore successfully configured."
           else
             echo "Notice: KEYSTORE_BASE64 not set in GitHub Secrets. Using debug signature."
             echo "has_keystore=false" >> $GITHUB_OUTPUT

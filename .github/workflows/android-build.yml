@@ -1,6 +1,6 @@
 name: Build Android APK
 
-on:
+'on':
   workflow_dispatch:
     inputs:
       build_type:
@@ -17,9 +17,9 @@ on:
         default: true
         type: boolean
       release_tag:
-        description: 'Release Tag (版本标签，例如 v1.0.2)'
+        description: 'Release Tag (留空根据已有Release自动+0.0.1，如无则为v1.0.0)'
         required: false
-        default: 'v1.0.2'
+        default: ''
         type: string
 
 permissions:
@@ -32,6 +32,120 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine Next Version (+0.0.1 from last release)
+        id: versioning
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CUSTOM_TAG: ${{ inputs.release_tag }}
+        run: |
+          python3 - << 'EOF'
+          import os
+          import re
+          import json
+          import urllib.request
+          import subprocess
+
+          repo = os.environ.get("GITHUB_REPOSITORY")
+          token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
+          custom_tag = (os.environ.get("CUSTOM_TAG") or "").strip()
+          github_ref = os.environ.get("GITHUB_REF", "")
+
+          final_tag = None
+          clean_ver = None
+
+          if github_ref.startswith("refs/tags/"):
+              final_tag = github_ref.replace("refs/tags/", "")
+              clean_ver = re.sub(r"^[vV]", "", final_tag)
+              print(f"Triggered by git tag: {final_tag}")
+          elif custom_tag and custom_tag.lower() != "auto":
+              final_tag = custom_tag
+              clean_ver = re.sub(r"^[vV]", "", final_tag)
+              print(f"Using manual input tag: {final_tag}")
+          else:
+              # 1. Fetch published releases from GitHub Releases page
+              releases = []
+              try:
+                  url = f"https://api.github.com/repos/{repo}/releases?per_page=100"
+                  req = urllib.request.Request(url)
+                  if token:
+                      req.add_header("Authorization", f"Bearer {token}")
+                  req.add_header("Accept", "application/vnd.github+json")
+                  req.add_header("User-Agent", "GitHubActions-AutoVersion")
+                  with urllib.request.urlopen(req, timeout=15) as resp:
+                      data = json.loads(resp.read().decode("utf-8"))
+                      if isinstance(data, list):
+                          releases = [r for r in data if not r.get("draft")]
+              except Exception as e:
+                  print(f"Releases REST API check notice: {e}")
+
+              # Fallback to gh CLI if REST API was rate-limited or empty
+              if not releases:
+                  try:
+                      cmd = ["gh", "release", "list", "--repo", repo, "--exclude-drafts", "--limit", "100", "--json", "tagName"]
+                      out = subprocess.check_output(cmd, text=True, stderr=subprocess.DEVNULL)
+                      data = json.loads(out)
+                      if isinstance(data, list):
+                          releases = data
+                  except Exception as e:
+                      print(f"gh release list check notice: {e}")
+
+              # Parse semantic versions from published releases on the Releases page
+              valid_versions = []
+              for r in releases:
+                  t = r.get("tagName") or r.get("tag_name") or ""
+                  t = t.strip()
+                  m = re.match(r"^[vV]?(\d+)\.(\d+)(?:\.(\d+))?$", t)
+                  if m:
+                      major = int(m.group(1))
+                      minor = int(m.group(2))
+                      patch = int(m.group(3) or 0)
+                      valid_versions.append((major, minor, patch, t))
+
+              if valid_versions:
+                  # Sort by semantic version to get the highest published version on Releases page
+                  valid_versions.sort(key=lambda x: (x[0], x[1], x[2]))
+                  last_major, last_minor, last_patch, last_tag = valid_versions[-1]
+                  next_patch = last_patch + 1
+                  clean_ver = f"{last_major}.{last_minor}.{next_patch}"
+                  final_tag = f"v{clean_ver}"
+                  print(f"Last version found on published Releases page: {last_tag} ({last_major}.{last_minor}.{last_patch})")
+                  print(f"Calculated next version (+0.0.1): {final_tag}")
+              else:
+                  # None exists on published Releases page: default to 1.0.0
+                  print("No published releases exist on Releases page. Defaulting to 1.0.0")
+                  clean_ver = "1.0.0"
+                  final_tag = "v1.0.0"
+
+          # Compute integer versionCode for Android (e.g. 1.0.0 -> 10000, 1.0.1 -> 10001)
+          m = re.match(r"^(\d+)\.(\d+)(?:\.(\d+))?", clean_ver)
+          if m:
+              major = int(m.group(1))
+              minor = int(m.group(2))
+              patch = int(m.group(3) or 0)
+              version_code = major * 10000 + minor * 100 + patch
+          else:
+              version_code = 10000
+
+          print(f"::notice ::Target Release Tag: {final_tag}, Version Name: {clean_ver}, Version Code: {version_code}")
+
+          # Write to GITHUB_OUTPUT and GITHUB_ENV
+          github_output = os.environ.get("GITHUB_OUTPUT")
+          if github_output:
+              with open(github_output, "a", encoding="utf-8") as f:
+                  f.write(f"final_tag={final_tag}\n")
+                  f.write(f"version_name={clean_ver}\n")
+                  f.write(f"version_code={version_code}\n")
+
+          github_env = os.environ.get("GITHUB_ENV")
+          if github_env:
+              with open(github_env, "a", encoding="utf-8") as f:
+                  f.write(f"FINAL_TAG={final_tag}\n")
+                  f.write(f"VERSION_NAME={clean_ver}\n")
+                  f.write(f"VERSION_CODE={version_code}\n")
+          EOF
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -64,7 +178,6 @@ jobs:
             
             echo "KEYSTORE_PATH=$GITHUB_WORKSPACE/android/keystore/release.keystore" >> $GITHUB_ENV
             
-            # Use bash default expansion (${VAR:-default}) to avoid GitHub Actions '||' evaluating to boolean 'true'
             KEYSTORE_PASS="${RAW_KEYSTORE_PASSWORD:-HbSecure@2026!Key}"
             KEY_ALIAS_VAL="${RAW_KEY_ALIAS:-homebox}"
             KEY_PASS="${RAW_KEY_PASSWORD:-HbSecure@2026!Key}"
@@ -73,7 +186,6 @@ jobs:
             echo "KEY_ALIAS=$KEY_ALIAS_VAL" >> $GITHUB_ENV
             echo "KEY_PASSWORD=$KEY_PASS" >> $GITHUB_ENV
 
-            # Pre-flight check: verify keystore integrity and password with keytool before Gradle runs
             echo "Verifying keystore integrity and password..."
             if ! keytool -list -keystore android/keystore/release.keystore -storepass "$KEYSTORE_PASS" > /tmp/keystore_entries.txt 2>&1; then
               echo "::error::Keystore password verification failed! Please check KEYSTORE_PASSWORD in GitHub Secrets."
@@ -92,6 +204,9 @@ jobs:
           fi
 
       - name: Build APK with Gradle
+        env:
+          VERSION_NAME: ${{ steps.versioning.outputs.version_name }}
+          VERSION_CODE: ${{ steps.versioning.outputs.version_code }}
         run: |
           chmod +x android/gradlew
           cd android
@@ -100,9 +215,9 @@ jobs:
             gradle wrapper || curl -sSL -o gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v8.7.0/gradle/wrapper/gradle-wrapper.jar
           fi
           if [ "${{ inputs.build_type }}" = "debug" ]; then
-            ./gradlew assembleDebug --stacktrace
+            ./gradlew assembleDebug -PVERSION_NAME="$VERSION_NAME" -PVERSION_CODE="$VERSION_CODE" --stacktrace
           else
-            ./gradlew assembleRelease --stacktrace
+            ./gradlew assembleRelease -PVERSION_NAME="$VERSION_NAME" -PVERSION_CODE="$VERSION_CODE" --stacktrace
           fi
 
       - name: Locate and Rename Output APK
@@ -119,13 +234,8 @@ jobs:
             exit 1
           fi
 
-          TAG_VAL="${{ inputs.release_tag }}"
-          if [ -n "$TAG_VAL" ]; then
-            VERSION_NAME="$TAG_VAL"
-          else
-            VERSION_NAME="${{ github.ref_name }}"
-          fi
-          DEST_APK="Homebox-${VERSION_NAME//\//-}.apk"
+          TAG_VAL="${FINAL_TAG:-v1.0.0}"
+          DEST_APK="Homebox-${TAG_VAL}.apk"
           cp "$ORIGINAL_APK" "$DEST_APK"
           echo "Output APK: $DEST_APK"
           echo "apk_path=$DEST_APK" >> $GITHUB_OUTPUT
@@ -138,10 +248,11 @@ jobs:
           retention-days: 30
 
       - name: Publish APK to GitHub Releases
-        if: startsWith(github.ref, 'refs/tags/') || inputs.create_release == true
+        if: startsWith(github.ref, 'refs/tags/') || inputs.create_release == true || inputs.create_release == 'true'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || inputs.release_tag || 'v1.0.0' }}
-          name: Homebox Android ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || inputs.release_tag || 'v1.0.0' }}
+          tag_name: ${{ steps.versioning.outputs.final_tag }}
+          name: Homebox Android ${{ steps.versioning.outputs.final_tag }}
           files: ${{ steps.locate_apk.outputs.apk_path }}
+          target_commitish: ${{ github.sha }}
           generate_release_notes: true

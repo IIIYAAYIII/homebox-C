@@ -11,8 +11,13 @@ android {
         applicationId = "software.homebox.android"
         minSdk = 26
         targetSdk = 34
-        versionCode = 3
-        versionName = "1.0.2"
+        val propVersionCode = project.findProperty("VERSION_CODE")?.toString()?.toIntOrNull()
+        val envVersionCode = System.getenv("VERSION_CODE")?.toIntOrNull()
+        versionCode = propVersionCode ?: envVersionCode ?: 1
+
+        val propVersionName = project.findProperty("VERSION_NAME")?.toString()
+        val envVersionName = System.getenv("VERSION_NAME")
+        versionName = propVersionName ?: envVersionName ?: "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

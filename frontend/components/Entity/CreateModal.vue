@@ -224,6 +224,7 @@
         @delete="deletePhotoAt"
         @rotate="rotatePhotoAt"
         @set-primary="setPrimaryPhotoAt"
+        @update="updatePhotoAt"
       />
     </form>
   </BaseModal>
@@ -516,6 +517,10 @@
       toast.error(t("components.entity.create_modal.toast.rotate_process_failed"));
       console.error(error);
     }
+  }
+
+  function updatePhotoAt(index: number, updated: PhotoPreview) {
+    form.photos[index] = updated;
   }
 
   onMounted(() => {

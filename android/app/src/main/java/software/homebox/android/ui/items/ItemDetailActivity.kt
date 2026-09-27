@@ -1,24 +1,65 @@
 package software.homebox.android.ui.items
 
+import android.app.Activity
 import android.app.AlertDialog
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.FileProvider
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import software.homebox.android.R
 import software.homebox.android.data.api.ApiClient
 import software.homebox.android.data.api.EntityItem
 import software.homebox.android.databinding.ActivityItemDetailBinding
+import software.homebox.android.ui.photo.PhotoEditorActivity
+import java.io.File
 
 class ItemDetailActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityItemDetailBinding
     private var entity: EntityItem? = null
+    private var cameraTempUri: Uri? = null
+
+    private val editPhotoLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            val editedPath = result.data?.getStringExtra("extra_photo_path")
+            if (!editedPath.isNullOrBlank() && entity != null) {
+                uploadEditedPhoto(entity!!.id, editedPath)
+            }
+        }
+    }
+
+    private val takePhotoLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+        if (success && cameraTempUri != null) {
+            openPhotoEditor(cameraTempUri!)
+        }
+    }
+
+    private val pickPhotoLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        if (uri != null) {
+            openPhotoEditor(uri)
+        }
+    }
+
+    private val requestCameraPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+        if (isGranted) {
+            launchCamera()
+        } else {
+            Toast.makeText(this, "需要相机权限以拍摄物品照片", Toast.LENGTH_SHORT).show()
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,8 +83,90 @@ class ItemDetailActivity : AppCompatActivity() {
             }
         }
 
+        binding.btnAddDetailPhoto.setOnClickListener {
+            showPhotoSourceDialog()
+        }
+
         binding.btnDelete.setOnClickListener {
             confirmDelete()
+        }
+    }
+
+    private fun showPhotoSourceDialog() {
+        val options = arrayOf(
+            getString(R.string.photo_source_camera),
+            getString(R.string.photo_source_gallery)
+        )
+        AlertDialog.Builder(this)
+            .setTitle(R.string.photo_select_source)
+            .setItems(options) { _, which ->
+                if (which == 0) {
+                    checkCameraPermissionAndLaunch()
+                } else {
+                    pickPhotoLauncher.launch("image/*")
+                }
+            }
+            .show()
+    }
+
+    private fun checkCameraPermissionAndLaunch() {
+        if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            launchCamera()
+        } else {
+            requestCameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+        }
+    }
+
+    private fun launchCamera() {
+        try {
+            val cacheImagesDir = File(cacheDir, "camera").apply { mkdirs() }
+            val tempFile = File(cacheImagesDir, "capture_${System.currentTimeMillis()}.jpg")
+            val uri = FileProvider.getUriForFile(this, "${packageName}.fileprovider", tempFile)
+            cameraTempUri = uri
+            takePhotoLauncher.launch(uri)
+        } catch (e: Exception) {
+            Toast.makeText(this, "启动相机失败: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun openPhotoEditor(uri: Uri) {
+        val intent = Intent(this, PhotoEditorActivity::class.java).apply {
+            putExtra("extra_image_uri", uri)
+        }
+        editPhotoLauncher.launch(intent)
+    }
+
+    private fun uploadEditedPhoto(entityId: String, photoPath: String) {
+        binding.btnAddDetailPhoto.isEnabled = false
+        Toast.makeText(this, R.string.photo_uploading, Toast.LENGTH_SHORT).show()
+
+        lifecycleScope.launch {
+            try {
+                val service = ApiClient.getService()
+                val file = File(photoPath)
+                val reqFile = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
+                val part = MultipartBody.Part.createFormData("file", file.name, reqFile)
+                val namePart = file.name.toRequestBody("text/plain".toMediaTypeOrNull())
+                val typePart = "photo".toRequestBody("text/plain".toMediaTypeOrNull())
+                val primaryPart = "true".toRequestBody("text/plain".toMediaTypeOrNull())
+
+                val resp = withContext(Dispatchers.IO) {
+                    service.uploadAttachment(entityId, part, namePart, typePart, primaryPart)
+                }
+
+                if (resp.isSuccessful && resp.body() != null) {
+                    Toast.makeText(this@ItemDetailActivity, R.string.photo_upload_success, Toast.LENGTH_SHORT).show()
+                    bindEntity(resp.body()!!)
+                    setResult(RESULT_OK)
+                } else {
+                    val errMsg = resp.message().ifBlank { "状态码 ${resp.code()}" }
+                    Toast.makeText(this@ItemDetailActivity, getString(R.string.photo_upload_failed, errMsg), Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(this@ItemDetailActivity, getString(R.string.photo_upload_failed, e.localizedMessage), Toast.LENGTH_SHORT).show()
+            } finally {
+                binding.btnAddDetailPhoto.isEnabled = true
+            }
         }
     }
 
@@ -73,15 +196,18 @@ class ItemDetailActivity : AppCompatActivity() {
 
         val photo = item.attachments?.firstOrNull()
         if (photo != null) {
-            val url = ApiClient.getAttachmentUrl(photo.id)
+            val url = ApiClient.getAttachmentUrl(item.id, photo.id)
             Glide.with(this)
                 .load(url)
                 .placeholder(R.drawable.ic_nav_items)
                 .error(R.drawable.ic_nav_items)
                 .centerCrop()
                 .into(binding.ivDetailPhoto)
+
+            binding.btnAddDetailPhoto.setText(R.string.photo_edit)
         } else {
             binding.ivDetailPhoto.setImageResource(R.drawable.ic_nav_items)
+            binding.btnAddDetailPhoto.setText(R.string.photo_add)
         }
     }
 

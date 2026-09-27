@@ -113,8 +113,23 @@ object ApiClient {
         return apiService!!
     }
 
+    fun getAttachmentUrl(entityId: String, attachmentId: String): String {
+        val base = cleanUrl(AppPreferences.serverUrl).trimEnd('/')
+        val token = AppPreferences.authToken
+        return if (token.isNotBlank()) {
+            "$base/api/v1/entities/$entityId/attachments/$attachmentId?token=$token"
+        } else {
+            "$base/api/v1/entities/$entityId/attachments/$attachmentId"
+        }
+    }
+
     fun getAttachmentUrl(attachmentId: String): String {
         val base = cleanUrl(AppPreferences.serverUrl).trimEnd('/')
-        return "$base/api/v1/attachments/$attachmentId"
+        val token = AppPreferences.authToken
+        return if (token.isNotBlank()) {
+            "$base/api/v1/attachments/$attachmentId?token=$token"
+        } else {
+            "$base/api/v1/attachments/$attachmentId"
+        }
     }
 }

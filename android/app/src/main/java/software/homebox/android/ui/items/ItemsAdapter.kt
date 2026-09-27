@@ -58,7 +58,7 @@ class ItemsAdapter(
             // Load primary photo thumbnail if present
             val photoAttachment = item.attachments?.firstOrNull { it.type?.startsWith("image", ignoreCase = true) == true || it.id.isNotBlank() }
             if (photoAttachment != null) {
-                val photoUrl = ApiClient.getAttachmentUrl(photoAttachment.id)
+                val photoUrl = ApiClient.getAttachmentUrl(item.id, photoAttachment.id)
                 Glide.with(itemView.context)
                     .load(photoUrl)
                     .placeholder(R.drawable.ic_nav_items)

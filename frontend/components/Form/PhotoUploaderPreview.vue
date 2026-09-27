@@ -25,7 +25,19 @@
 
           <Tooltip>
             <TooltipTrigger>
-              <Button size="icon" type="button" variant="default" @click.prevent="emit('rotate', index)">
+              <Button size="icon" type="button" variant="default" @click.prevent="openEditor(index)">
+                <MdiCrop />
+                <div class="sr-only">{{ $t("components.photo_editor.edit_photo") }}</div>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{{ $t("components.photo_editor.edit_photo") }}</p>
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger>
+              <Button size="icon" type="button" variant="outline" @click.prevent="emit('rotate', index)">
                 <MdiRotateClockwise />
                 <div class="sr-only">{{ $t("components.entity.create_modal.rotate_photo") }}</div>
               </Button>
@@ -59,19 +71,29 @@
         <p class="mt-1 text-sm" style="overflow-wrap: anywhere">{{ photo.photoName }}</p>
       </div>
     </div>
+
+    <!-- Photo Processing Modal -->
+    <PhotoEditorModal
+      v-model="isEditorOpen"
+      :photo="editingPhoto"
+      @saved="onPhotoSaved"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
+  import { ref } from "vue";
   import { Button } from "~/components/ui/button";
   import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "~/components/ui/tooltip";
   import MdiDelete from "~icons/mdi/delete";
+  import MdiCrop from "~icons/mdi/crop";
   import MdiRotateClockwise from "~icons/mdi/rotate-clockwise";
   import MdiStarOutline from "~icons/mdi/star-outline";
   import MdiStar from "~icons/mdi/star";
   import type { PhotoPreview } from "./photo-uploader";
+  import PhotoEditorModal from "./PhotoEditorModal.vue";
 
-  defineProps<{
+  const props = defineProps<{
     photos: PhotoPreview[];
   }>();
 
@@ -79,5 +101,24 @@
     (e: "delete", index: number): void;
     (e: "rotate", index: number): void;
     (e: "setPrimary", index: number): void;
+    (e: "update", index: number, updated: PhotoPreview): void;
   }>();
+
+  const isEditorOpen = ref(false);
+  const editingIndex = ref(-1);
+  const editingPhoto = ref<PhotoPreview | null>(null);
+
+  function openEditor(index: number) {
+    const photo = props.photos[index];
+    if (!photo) return;
+    editingIndex.value = index;
+    editingPhoto.value = photo;
+    isEditorOpen.value = true;
+  }
+
+  function onPhotoSaved(updated: PhotoPreview) {
+    if (editingIndex.value >= 0) {
+      emit("update", editingIndex.value, updated);
+    }
+  }
 </script>

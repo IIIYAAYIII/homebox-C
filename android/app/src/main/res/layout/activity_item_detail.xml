@@ -31,15 +31,35 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <ImageView
-                android:id="@+id/ivDetailPhoto"
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="220dp"
-                android:background="#E9ECEF"
-                android:contentDescription="@string/details_title"
-                android:scaleType="centerCrop"
-                android:src="@drawable/ic_nav_items"
-                app:tint="@color/text_secondary" />
+                android:layout_height="220dp">
+
+                <ImageView
+                    android:id="@+id/ivDetailPhoto"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="#E9ECEF"
+                    android:contentDescription="@string/details_title"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_nav_items" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnAddDetailPhoto"
+                    style="@style/Widget.Material3.Button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:layout_gravity="bottom|end"
+                    android:layout_margin="12dp"
+                    android:backgroundTint="#D92D6A4F"
+                    android:text="@string/photo_add"
+                    android:textColor="#FFFFFF"
+                    android:textSize="12sp"
+                    app:cornerRadius="20dp"
+                    app:icon="@drawable/ic_photo_camera"
+                    app:iconPadding="4dp"
+                    app:iconSize="16dp" />
+            </FrameLayout>
 
             <TextView
                 android:id="@+id/tvDetailName"

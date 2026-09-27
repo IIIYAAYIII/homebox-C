@@ -13,6 +13,7 @@
         @delete="deletePhotoAt"
         @rotate="rotatePhotoAt"
         @set-primary="setPrimaryPhotoAt"
+        @update="updatePhotoAt"
       />
 
       <div class="mt-4 flex flex-row-reverse gap-2">
@@ -99,6 +100,10 @@
       toast.error(t("components.entity.create_modal.toast.rotate_process_failed"));
       console.error(error);
     }
+  }
+
+  function updatePhotoAt(index: number, updated: PhotoPreview) {
+    photos.value[index] = updated;
   }
 
   function close() {

@@ -213,18 +213,32 @@ class ItemCreateActivity : AppCompatActivity() {
                             Toast.makeText(this@ItemCreateActivity, R.string.photo_uploading, Toast.LENGTH_SHORT).show()
                         }
 
-                        withContext(Dispatchers.IO) {
+                        val uploadSuccess = withContext(Dispatchers.IO) {
                             try {
                                 val file = File(photoPath)
-                                val reqFile = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
-                                val part = MultipartBody.Part.createFormData("file", file.name, reqFile)
-                                val namePart = file.name.toRequestBody("text/plain".toMediaTypeOrNull())
-                                val typePart = "photo".toRequestBody("text/plain".toMediaTypeOrNull())
-                                val primaryPart = "true".toRequestBody("text/plain".toMediaTypeOrNull())
+                                val multipartBody = MultipartBody.Builder()
+                                    .setType(MultipartBody.FORM)
+                                    .addFormDataPart("name", file.name)
+                                    .addFormDataPart("type", "photo")
+                                    .addFormDataPart("primary", "true")
+                                    .addFormDataPart(
+                                        "file",
+                                        file.name,
+                                        file.asRequestBody("image/jpeg".toMediaTypeOrNull())
+                                    )
+                                    .build()
 
-                                service.uploadAttachment(createdEntity.id, part, namePart, typePart, primaryPart)
+                                val uploadResp = service.uploadAttachment(createdEntity.id, multipartBody)
+                                uploadResp.isSuccessful
                             } catch (e: Exception) {
                                 e.printStackTrace()
+                                false
+                            }
+                        }
+
+                        if (!uploadSuccess) {
+                            withContext(Dispatchers.Main) {
+                                Toast.makeText(this@ItemCreateActivity, "物品已创建，但照片上传失败", Toast.LENGTH_SHORT).show()
                             }
                         }
                     }

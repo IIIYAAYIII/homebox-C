@@ -53,6 +53,7 @@ class CropOverlayView @JvmOverloads constructor(
         }
 
     val cropRect: RectF = RectF()
+    var hasUserModifiedCrop: Boolean = false
 
     var targetAspectRatio: Float? = null // null = Free, 1f = 1:1, 4f/3f = 4:3, 16f/9f = 16:9
         set(value) {
@@ -93,8 +94,15 @@ class CropOverlayView @JvmOverloads constructor(
 
     fun resetCrop(ratio: Float? = null) {
         this.targetAspectRatio = ratio
+        this.hasUserModifiedCrop = (ratio != null)
         initCropRect()
         invalidate()
+    }
+
+    fun hasPendingCrop(): Boolean {
+        if (!hasUserModifiedCrop || imageBounds.width() <= 0 || imageBounds.height() <= 0) return false
+        val norm = getCropRectNormalized()
+        return norm.left > 0.01f || norm.top > 0.01f || norm.right < 0.99f || norm.bottom < 0.99f
     }
 
     private fun applyAspectRatio() {
@@ -189,6 +197,7 @@ class CropOverlayView @JvmOverloads constructor(
             }
             MotionEvent.ACTION_MOVE -> {
                 if (activeHandle != TouchHandle.NONE) {
+                    hasUserModifiedCrop = true
                     val dx = x - lastTouchX
                     val dy = y - lastTouchY
                     onMoveHandle(dx, dy)

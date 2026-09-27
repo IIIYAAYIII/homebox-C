@@ -27,10 +27,13 @@ class PhotoEditorActivity : AppCompatActivity() {
     private lateinit var binding: ActivityPhotoEditorBinding
 
     private var currentBitmap: Bitmap? = null
+    private var lastColorBitmap: Bitmap? = null
+    private var isCurrentGrayscale: Boolean = false
     private var originalByteSize: Long = 0L
 
     // Compressed JPEG byte array history stack (up to 50 steps)
     private val historyStack = ArrayList<ByteArray>()
+    private val grayscaleFlags = ArrayList<Boolean>()
     private var currentIndex = -1
 
     private enum class ActiveTab {
@@ -167,12 +170,25 @@ class PhotoEditorActivity : AppCompatActivity() {
                 originalByteSize = initialBytes.size.toLong()
             }
 
-            pushState(initialBytes, bitmap)
+            lastColorBitmap = bitmap.copy(bitmap.config ?: Bitmap.Config.ARGB_8888, true)
+            isCurrentGrayscale = false
+            pushState(initialBytes, bitmap, isGrayscale = false)
             switchTab(ActiveTab.CROP)
         }
     }
 
     private fun switchTab(tab: ActiveTab) {
+        // Auto-commit pending edits from the previous tab before switching
+        if (currentTab == ActiveTab.CROP && tab != ActiveTab.CROP) {
+            if (binding.cropOverlay.hasPendingCrop()) {
+                commitCropSynchronously()
+            }
+        } else if (currentTab == ActiveTab.ADJUST && tab != ActiveTab.ADJUST) {
+            if (binding.sbBrightness.progress != 50 || binding.sbContrast.progress != 50) {
+                applyAdjustSynchronously()
+            }
+        }
+
         currentTab = tab
 
         binding.panelCrop.visibility = if (tab == ActiveTab.CROP) View.VISIBLE else View.GONE
@@ -229,21 +245,29 @@ class PhotoEditorActivity : AppCompatActivity() {
         }
     }
 
-    private fun pushState(bytes: ByteArray, bitmap: Bitmap) {
+    private fun pushState(bytes: ByteArray, bitmap: Bitmap, isGrayscale: Boolean = false) {
         // Discard any forward redo history if we are in the middle of stack
         while (historyStack.size > currentIndex + 1) {
             historyStack.removeAt(historyStack.size - 1)
+            grayscaleFlags.removeAt(grayscaleFlags.size - 1)
         }
 
         // Limit stack to 50 steps
         if (historyStack.size >= 50) {
             historyStack.removeAt(0)
+            grayscaleFlags.removeAt(0)
             currentIndex--
         }
 
         historyStack.add(bytes)
+        grayscaleFlags.add(isGrayscale)
         currentIndex = historyStack.size - 1
         currentBitmap = bitmap
+        isCurrentGrayscale = isGrayscale
+
+        if (!isGrayscale) {
+            lastColorBitmap = bitmap.copy(bitmap.config ?: Bitmap.Config.ARGB_8888, true)
+        }
 
         binding.ivPreview.setImageBitmap(bitmap)
         updateCropOverlayBounds()
@@ -301,6 +325,10 @@ class PhotoEditorActivity : AppCompatActivity() {
         val bytes = historyStack[index]
         val decoded = BitmapUtils.decodeFromBytes(bytes) ?: return
         currentBitmap = decoded
+        isCurrentGrayscale = grayscaleFlags.getOrNull(index) ?: false
+        if (!isCurrentGrayscale) {
+            lastColorBitmap = decoded.copy(decoded.config ?: Bitmap.Config.ARGB_8888, true)
+        }
         binding.ivPreview.setImageBitmap(decoded)
         updateCropOverlayBounds()
         updateHistoryUI()
@@ -308,19 +336,26 @@ class PhotoEditorActivity : AppCompatActivity() {
 
     // --- Action Handlers ---
 
-    private fun applyCrop() {
-        val bitmap = currentBitmap ?: return
+    private fun commitCropSynchronously(): Boolean {
+        val bitmap = currentBitmap ?: return false
         val normRect = binding.cropOverlay.getCropRectNormalized()
+        if (normRect.left <= 0.005f && normRect.top <= 0.005f && normRect.right >= 0.995f && normRect.bottom >= 0.995f) {
+            binding.cropOverlay.hasUserModifiedCrop = false
+            return false
+        }
 
-        lifecycleScope.launch {
-            val cropped = withContext(Dispatchers.Default) {
-                BitmapUtils.cropBitmap(bitmap, normRect)
-            }
-            val bytes = withContext(Dispatchers.IO) {
-                BitmapUtils.compressToJpeg(cropped, 85)
-            }
-            pushState(bytes, cropped)
-            binding.cropOverlay.resetCrop(binding.cropOverlay.targetAspectRatio)
+        val cropped = BitmapUtils.cropBitmap(bitmap, normRect)
+        lastColorBitmap?.let { colorBm ->
+            lastColorBitmap = BitmapUtils.cropBitmap(colorBm, normRect)
+        }
+        val bytes = BitmapUtils.compressToJpeg(cropped, 85)
+        pushState(bytes, cropped, isGrayscale = isCurrentGrayscale)
+        binding.cropOverlay.resetCrop(binding.cropOverlay.targetAspectRatio)
+        return true
+    }
+
+    private fun applyCrop() {
+        if (commitCropSynchronously()) {
             Toast.makeText(this@PhotoEditorActivity, R.string.photo_crop_applied, Toast.LENGTH_SHORT).show()
         }
     }
@@ -331,10 +366,13 @@ class PhotoEditorActivity : AppCompatActivity() {
             val rotated = withContext(Dispatchers.Default) {
                 BitmapUtils.rotateBitmap(bitmap, degrees)
             }
+            lastColorBitmap?.let { colorBm ->
+                lastColorBitmap = BitmapUtils.rotateBitmap(colorBm, degrees)
+            }
             val bytes = withContext(Dispatchers.IO) {
                 BitmapUtils.compressToJpeg(rotated, 85)
             }
-            pushState(bytes, rotated)
+            pushState(bytes, rotated, isGrayscale = isCurrentGrayscale)
         }
     }
 
@@ -344,31 +382,40 @@ class PhotoEditorActivity : AppCompatActivity() {
             val flipped = withContext(Dispatchers.Default) {
                 BitmapUtils.flipBitmap(bitmap, horizontal, vertical)
             }
+            lastColorBitmap?.let { colorBm ->
+                lastColorBitmap = BitmapUtils.flipBitmap(colorBm, horizontal, vertical)
+            }
             val bytes = withContext(Dispatchers.IO) {
                 BitmapUtils.compressToJpeg(flipped, 85)
             }
-            pushState(bytes, flipped)
+            pushState(bytes, flipped, isGrayscale = isCurrentGrayscale)
         }
     }
 
     private fun applyFilter(filterType: Int) {
-        // 0 = Color (restore state 0's color or keep current), 1 = B&W, 2 = Document Scan
+        // 0 = Color, 1 = B&W, 2 = Document Scan
         val bitmap = currentBitmap ?: return
+        if (filterType == 0 && !isCurrentGrayscale) {
+            Toast.makeText(this, "当前已是原色", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         lifecycleScope.launch {
+            val isGray = (filterType == 1 || filterType == 2)
             val processed = withContext(Dispatchers.Default) {
                 when (filterType) {
-                    1 -> BitmapUtils.applyGrayscale(bitmap)
-                    2 -> BitmapUtils.applyDocumentMode(bitmap)
+                    1 -> BitmapUtils.applyGrayscale(lastColorBitmap ?: bitmap)
+                    2 -> BitmapUtils.applyDocumentMode(lastColorBitmap ?: bitmap)
                     else -> {
-                        // Restore initial color bitmap if available
-                        BitmapUtils.decodeFromBytes(historyStack[0]) ?: bitmap
+                        // Restore color version corresponding to current geometry
+                        lastColorBitmap ?: bitmap
                     }
                 }
             }
             val bytes = withContext(Dispatchers.IO) {
                 BitmapUtils.compressToJpeg(processed, 85)
             }
-            pushState(bytes, processed)
+            pushState(bytes, processed, isGrayscale = isGray)
         }
     }
 
@@ -384,33 +431,44 @@ class PhotoEditorActivity : AppCompatActivity() {
             val scaled = withContext(Dispatchers.Default) {
                 BitmapUtils.scaleToMaxDimension(bitmap, maxDim)
             }
+            lastColorBitmap?.let { colorBm ->
+                lastColorBitmap = BitmapUtils.scaleToMaxDimension(colorBm, maxDim)
+            }
             val bytes = withContext(Dispatchers.IO) {
                 BitmapUtils.compressToJpeg(scaled, 85)
             }
-            pushState(bytes, scaled)
+            pushState(bytes, scaled, isGrayscale = isCurrentGrayscale)
         }
     }
 
-    private fun applyAdjust() {
+    private fun applyAdjustSynchronously() {
         val bitmap = currentBitmap ?: return
         val b = (binding.sbBrightness.progress - 50).toFloat()
         val c = (binding.sbContrast.progress - 50).toFloat()
+        if (b == 0f && c == 0f) return
 
-        lifecycleScope.launch {
-            val adjusted = withContext(Dispatchers.Default) {
-                BitmapUtils.adjustBrightnessContrast(bitmap, b, c)
-            }
-            val bytes = withContext(Dispatchers.IO) {
-                BitmapUtils.compressToJpeg(adjusted, 85)
-            }
-            pushState(bytes, adjusted)
-            // Reset seekbars to center after applying
-            binding.sbBrightness.progress = 50
-            binding.sbContrast.progress = 50
+        val adjusted = BitmapUtils.adjustBrightnessContrast(bitmap, b, c)
+        if (!isCurrentGrayscale) {
+            lastColorBitmap = adjusted.copy(adjusted.config ?: Bitmap.Config.ARGB_8888, true)
         }
+        val bytes = BitmapUtils.compressToJpeg(adjusted, 85)
+        pushState(bytes, adjusted, isGrayscale = isCurrentGrayscale)
+        binding.sbBrightness.progress = 50
+        binding.sbContrast.progress = 50
+    }
+
+    private fun applyAdjust() {
+        applyAdjustSynchronously()
     }
 
     private fun saveAndFinish() {
+        // Auto-commit any pending crop or adjustment before saving
+        if (currentTab == ActiveTab.CROP && binding.cropOverlay.hasPendingCrop()) {
+            commitCropSynchronously()
+        } else if (currentTab == ActiveTab.ADJUST && (binding.sbBrightness.progress != 50 || binding.sbContrast.progress != 50)) {
+            applyAdjustSynchronously()
+        }
+
         if (currentIndex !in historyStack.indices) {
             finish()
             return

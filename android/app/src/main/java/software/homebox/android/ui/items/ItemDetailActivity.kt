@@ -145,19 +145,25 @@ class ItemDetailActivity : AppCompatActivity() {
             try {
                 val service = ApiClient.getService()
                 val file = File(photoPath)
-                val reqFile = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
-                val part = MultipartBody.Part.createFormData("file", file.name, reqFile)
-                val namePart = file.name.toRequestBody("text/plain".toMediaTypeOrNull())
-                val typePart = "photo".toRequestBody("text/plain".toMediaTypeOrNull())
-                val primaryPart = "true".toRequestBody("text/plain".toMediaTypeOrNull())
+                val multipartBody = MultipartBody.Builder()
+                    .setType(MultipartBody.FORM)
+                    .addFormDataPart("name", file.name)
+                    .addFormDataPart("type", "photo")
+                    .addFormDataPart("primary", "true")
+                    .addFormDataPart(
+                        "file",
+                        file.name,
+                        file.asRequestBody("image/jpeg".toMediaTypeOrNull())
+                    )
+                    .build()
 
                 val resp = withContext(Dispatchers.IO) {
-                    service.uploadAttachment(entityId, part, namePart, typePart, primaryPart)
+                    service.uploadAttachment(entityId, multipartBody)
                 }
 
-                if (resp.isSuccessful && resp.body() != null) {
+                if (resp.isSuccessful) {
                     Toast.makeText(this@ItemDetailActivity, R.string.photo_upload_success, Toast.LENGTH_SHORT).show()
-                    bindEntity(resp.body()!!)
+                    loadEntityById(entityId)
                     setResult(RESULT_OK)
                 } else {
                     val errMsg = resp.message().ifBlank { "状态码 ${resp.code()}" }
@@ -190,14 +196,15 @@ class ItemDetailActivity : AppCompatActivity() {
             binding.tvDetailDesc.visibility = View.GONE
         }
 
-        binding.tvDetailQuantity.text = getString(R.string.item_quantity, item.quantity ?: 1)
+        val qtyInt = item.quantity?.toInt() ?: 1
+        binding.tvDetailQuantity.text = getString(R.string.item_quantity, qtyInt)
         binding.tvDetailModel.text = "型号: " + (item.modelNumber ?: "-")
         binding.tvDetailSerial.text = "序列号/SN: " + (item.serialNumber ?: "-")
         binding.tvDetailPrice.text = "购入价格: " + if (item.purchasePrice != null) "¥ ${item.purchasePrice}" else "-"
 
-        val photo = item.attachments?.firstOrNull()
-        if (photo != null) {
-            val url = ApiClient.getAttachmentUrl(item.id, photo.id)
+        val targetImageId = item.thumbnailId ?: item.imageId ?: item.attachments?.firstOrNull()?.id
+        if (!targetImageId.isNullOrBlank()) {
+            val url = ApiClient.getAttachmentUrl(item.id, targetImageId)
             Glide.with(this)
                 .load(url)
                 .placeholder(R.drawable.ic_nav_items)

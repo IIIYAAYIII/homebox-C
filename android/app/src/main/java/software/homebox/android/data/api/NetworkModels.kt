@@ -38,7 +38,7 @@ data class EntityItem(
     @SerializedName("description") val description: String? = null,
     @SerializedName("typeId") val typeId: String? = null,
     @SerializedName("parentId") val parentId: String? = null,
-    @SerializedName("quantity") val quantity: Int? = 1,
+    @SerializedName("quantity") val quantity: Double? = 1.0,
     @SerializedName("modelNumber") val modelNumber: String? = null,
     @SerializedName("serialNumber") val serialNumber: String? = null,
     @SerializedName("manufacturer") val manufacturer: String? = null,
@@ -48,6 +48,8 @@ data class EntityItem(
     @SerializedName("warrantyExpires") val warrantyExpires: String? = null,
     @SerializedName("parentName") val parentName: String? = null,
     @SerializedName("locationName") val locationName: String? = null,
+    @SerializedName("imageId") val imageId: String? = null,
+    @SerializedName("thumbnailId") val thumbnailId: String? = null,
     @SerializedName("attachments") val attachments: List<AttachmentItem>? = null
 ) : Serializable
 

@@ -65,7 +65,7 @@ func (ctrl *V1Controller) HandleEntityAttachmentCreate() errchain.HandlerFunc {
 
 		errs := validate.NewFieldErrors()
 
-		file, _, err := r.FormFile("file")
+		file, fileHeader, err := r.FormFile("file")
 		if err != nil {
 			switch {
 			case errors.Is(err, http.ErrMissingFile):
@@ -81,6 +81,9 @@ func (ctrl *V1Controller) HandleEntityAttachmentCreate() errchain.HandlerFunc {
 		}
 
 		attachmentName := r.FormValue("name")
+		if attachmentName == "" && fileHeader != nil && fileHeader.Filename != "" {
+			attachmentName = fileHeader.Filename
+		}
 		if attachmentName == "" {
 			log.Debug().Msg("failed to get name from form")
 			errs = errs.Append("name", "name is required")

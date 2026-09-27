@@ -84,6 +84,13 @@ class MainActivity : AppCompatActivity() {
         loadItems()
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (currentTab == R.id.nav_items) {
+            loadItems()
+        }
+    }
+
     private fun setupRecyclerView() {
         itemsAdapter = ItemsAdapter { item ->
             val intent = Intent(this, ItemDetailActivity::class.java).apply {

@@ -48,13 +48,9 @@ interface HomeboxApiService {
     @GET("api/v1/entities/tree")
     suspend fun getLocationTree(): Response<List<LocationTreeItem>>
 
-    @Multipart
     @POST("api/v1/entities/{id}/attachments")
     suspend fun uploadAttachment(
         @Path("id") id: String,
-        @Part file: MultipartBody.Part,
-        @Part("name") name: RequestBody,
-        @Part("type") type: RequestBody? = null,
-        @Part("primary") primary: RequestBody? = null
-    ): Response<EntityItem>
+        @Body body: RequestBody
+    ): Response<okhttp3.ResponseBody>
 }

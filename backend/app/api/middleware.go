@@ -137,6 +137,9 @@ func getBearer(r *http.Request) (string, error) {
 func getQuery(r *http.Request) (string, error) {
 	token := r.URL.Query().Get("access_token")
 	if token == "" {
+		token = r.URL.Query().Get("token")
+	}
+	if token == "" {
 		return "", errors.New("access_token query is required")
 	}
 
@@ -145,7 +148,10 @@ func getQuery(r *http.Request) (string, error) {
 		return "", errors.New("access_token query is required")
 	}
 
-	return token, nil
+	token = strings.TrimPrefix(token, "Bearer ")
+	token = strings.TrimPrefix(token, "bearer ")
+
+	return strings.TrimSpace(token), nil
 }
 
 func getWebSocketProtocolToken(r *http.Request) (string, error) {

@@ -37,7 +37,8 @@ class ItemsAdapter(
 
         fun bind(item: EntityItem) {
             binding.tvItemName.text = item.name
-            binding.tvItemQuantity.text = itemView.context.getString(R.string.item_quantity, item.quantity ?: 1)
+            val qtyInt = item.quantity?.toInt() ?: 1
+            binding.tvItemQuantity.text = itemView.context.getString(R.string.item_quantity, qtyInt)
 
             val location = item.locationName ?: item.parentName
             if (!location.isNullOrBlank()) {
@@ -55,10 +56,13 @@ class ItemsAdapter(
                 binding.tvItemSerial.visibility = View.GONE
             }
 
-            // Load primary photo thumbnail if present
-            val photoAttachment = item.attachments?.firstOrNull { it.type?.startsWith("image", ignoreCase = true) == true || it.id.isNotBlank() }
-            if (photoAttachment != null) {
-                val photoUrl = ApiClient.getAttachmentUrl(item.id, photoAttachment.id)
+            // Load primary photo thumbnail if present (checks thumbnailId, imageId, or attachments)
+            val targetImageId = item.thumbnailId
+                ?: item.imageId
+                ?: item.attachments?.firstOrNull { it.type?.startsWith("image", ignoreCase = true) == true || it.type.equals("photo", ignoreCase = true) || it.id.isNotBlank() }?.id
+
+            if (!targetImageId.isNullOrBlank()) {
+                val photoUrl = ApiClient.getAttachmentUrl(item.id, targetImageId)
                 Glide.with(itemView.context)
                     .load(photoUrl)
                     .placeholder(R.drawable.ic_nav_items)

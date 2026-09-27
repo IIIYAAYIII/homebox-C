@@ -39,6 +39,7 @@ export enum DialogID {
   CreateEntityType = "create-entity-type",
   UpdateEntityType = "update-entity-type",
   WipeInventory = "wipe-inventory",
+  AddPhoto = "add-photo",
 }
 
 /**
@@ -47,6 +48,10 @@ export enum DialogID {
  * - Keys not present       => no params allowed
  */
 export type DialogParamsMap = {
+  [DialogID.AddPhoto]?: {
+    itemId?: string;
+    onUploaded?: () => void;
+  };
   [DialogID.ItemImage]: (
     | {
         type: "preloaded";

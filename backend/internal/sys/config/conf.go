@@ -90,8 +90,8 @@ type WebConfig struct {
 	Port string `yaml:"port" conf:"default:7745"`
 	Host string `yaml:"host"`
 	// MaxUploadSize is the body cap (in MB) applied to ordinary upload
-	// endpoints (attachments, item imports, etc.). Defaults to 10 MB.
-	MaxUploadSize int64 `yaml:"max_file_upload" conf:"default:10"`
+	// endpoints (attachments, item imports, etc.). Defaults to 50 MB.
+	MaxUploadSize int64 `yaml:"max_file_upload" conf:"default:50"`
 	// MaxImportSize is the body cap (in MB) for collection-restore uploads
 	// (POST /v1/group/import). Set independently because a full collection
 	// backup including attachments can be much larger than a single asset

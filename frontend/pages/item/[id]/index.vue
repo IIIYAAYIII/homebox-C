@@ -45,6 +45,7 @@
   import DetailsSection from "~/components/global/DetailsSection/DetailsSection.vue";
   import ItemAttachmentsList from "~/components/Item/AttachmentsList.vue";
   import ItemViewSelectable from "~/components/Item/View/Selectable.vue";
+  import ItemAddPhotoModal from "~/components/Item/AddPhotoModal.vue";
 
   const { t } = useI18n();
 
@@ -617,6 +618,17 @@
     navigateTo(`/template/${data.id}`);
   }
 
+  function openAddPhotoDialog() {
+    openDialog(DialogID.AddPhoto, {
+      params: {
+        itemId: itemId.value,
+        onUploaded: () => {
+          refresh();
+        },
+      },
+    });
+  }
+
   async function createSubitem() {
     openDialog(DialogID.CreateEntity, {
       params: {
@@ -633,6 +645,7 @@
     <Title>{{ item.name }}</Title>
 
     <ItemImageDialog />
+    <ItemAddPhotoModal :item-id="itemId" @uploaded="refresh" />
     <Dialog :dialog-id="DialogID.DuplicateTemporarySettings">
       <DialogContent>
         <DialogHeader>
@@ -706,8 +719,8 @@
                 type="asset"
               />
               <LabelMaker v-else :id="item.id" type="item" />
-              <Button class="w-9 md:w-auto" :aria-label="$t('global.create_subitem')" @click="createSubitem">
-                <MdiPlus />
+              <Button class="w-9 md:w-auto" :title="$t('global.create_subitem')" :aria-label="$t('global.create_subitem')" @click="createSubitem">
+                <MdiFolderPlusOutline class="size-5" />
                 <span class="hidden md:inline">{{ $t("global.create_subitem") }}</span>
               </Button>
 
@@ -719,6 +732,10 @@
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" class="w-48">
+                  <DropdownMenuItem @click="openAddPhotoDialog">
+                    <MdiCameraOutline class="mr-2 size-4" />
+                    {{ $t("items.add_photo") }}
+                  </DropdownMenuItem>
                   <DropdownMenuItem @click="handleDuplicateClick">
                     <MdiPlusBoxMultipleOutline class="mr-2 size-4" />
                     {{ $t("global.duplicate") }}
@@ -800,12 +817,29 @@
 
         <!-- anything in this is not rendered if on another page -->
         <template v-if="!hasNested">
-          <BaseCard v-if="photos && photos.length > 0">
+          <BaseCard collapsable>
             <template #title> {{ $t("items.photos") }} </template>
-            <div class="scroll-bg container mx-auto flex max-h-[500px] flex-wrap gap-2 overflow-y-scroll border-t p-4">
+            <template #title-actions>
+              <Button size="sm" variant="outline" class="flex items-center gap-1.5" @click="openAddPhotoDialog">
+                <MdiCameraOutline class="size-4" />
+                <span>{{ $t("items.add_photo") }}</span>
+              </Button>
+            </template>
+            <div
+              v-if="photos && photos.length > 0"
+              class="scroll-bg container mx-auto flex max-h-[500px] flex-wrap gap-2 overflow-y-scroll border-t p-4"
+            >
               <button v-for="(img, i) in photos" :key="i" @click="openImageDialog(img, item.id)">
                 <img class="max-h-[200px] rounded" :src="img.thumbnailSrc" :alt="$t('items.photo')" loading="lazy" />
               </button>
+            </div>
+            <div v-else class="flex flex-col items-center justify-center border-t py-8 text-center text-muted-foreground">
+              <MdiCameraOutline class="mb-2 size-8 opacity-40" />
+              <p class="text-sm">{{ $t("items.no_photos") }}</p>
+              <Button size="sm" variant="secondary" class="mt-3 flex items-center gap-1.5" @click="openAddPhotoDialog">
+                <MdiCameraOutline class="size-4" />
+                <span>{{ $t("items.add_photo") }}</span>
+              </Button>
             </div>
           </BaseCard>
 

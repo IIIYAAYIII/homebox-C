@@ -1,14 +1,20 @@
 <template>
   <BaseModal :dialog-id="DialogID.CreateEntity">
     <template #title>
-      <div class="flex items-center gap-2 text-nowrap">
-        <span>Create</span>
-        <EntitySelector
-          :selected-entity-type="selectedEntityType?.id"
-          :entity-types="subItemCreate ? entityTypes.filter(t => !t.isLocation) : entityTypes"
-          size="sm"
-          @entity-type-changed="onEntityTypeChanged"
-        />
+      <div class="flex flex-col gap-0.5">
+        <div class="flex items-center gap-2 text-nowrap">
+          <span v-if="subItemCreate">{{ $t("global.create_subitem") }}</span>
+          <span v-else>{{ $t("global.create") }}</span>
+          <EntitySelector
+            :selected-entity-type="selectedEntityType?.id"
+            :entity-types="subItemCreate ? entityTypes.filter(t => !t.isLocation) : entityTypes"
+            size="sm"
+            @entity-type-changed="onEntityTypeChanged"
+          />
+        </div>
+        <span v-if="subItemCreate && parent?.name" class="text-xs font-normal text-muted-foreground">
+          {{ $t("components.entity.create_modal.subitem_of", { name: parent.name }) }}
+        </span>
       </div>
     </template>
     <template #header-actions>
@@ -534,11 +540,12 @@
 
           if (data) {
             parent.value = data;
-          }
-
-          if (data.parent) {
-            const loc = data.parent;
-            parentItemLocationId = loc.id;
+            form.parentId = data.id;
+            if (data.location) {
+              parentItemLocationId = data.location.id;
+            } else if (data.parent) {
+              parentItemLocationId = data.parent.id;
+            }
           }
         }
 
@@ -577,6 +584,8 @@
         const found = locations.value.find(l => l.id === locId);
         if (found) {
           form.location = found;
+        } else if (parent.value?.location) {
+          form.location = parent.value.location;
         }
       }
 
@@ -589,6 +598,16 @@
   });
 
   async function create(close = true) {
+    if (!form.name || !form.name.trim()) {
+      toast.error(
+        t("components.entity.create_modal.toast.please_enter_name", {
+          type: t(selectedEntityType.value ? selectedEntityType.value.name : "global.entity"),
+        })
+      );
+      nameInput.value?.focus();
+      return;
+    }
+
     // An empty entityTypeId serializes to "" and fails UUID unmarshalling on the
     // backend, so block creation up front rather than firing a doomed request.
     if (!selectedEntityType.value?.id) {
@@ -598,7 +617,7 @@
 
     // Items must live somewhere, but a top-level location has no parent, so the
     // parent location selector is optional when creating a location.
-    if (!selectedEntityType.value?.isLocation && !form.location?.id) {
+    if (!selectedEntityType.value?.isLocation && !form.location?.id && !form.parentId) {
       toast.error(t("components.entity.create_modal.toast.please_select_location"));
       return;
     }

@@ -42,11 +42,12 @@ export type TreeQuery = {
 export class AttachmentsAPI extends BaseAPI {
   add(id: string, file: File | Blob, filename: string, type: AttachmentTypes | null = null, primary?: boolean) {
     const formData = new FormData();
-    formData.append("file", file);
+    const safeFilename = filename || (file instanceof File && file.name) || `photo_${Date.now()}.jpg`;
+    formData.append("file", file, safeFilename);
     if (type) {
       formData.append("type", type);
     }
-    formData.append("name", filename);
+    formData.append("name", safeFilename);
     if (primary !== undefined) {
       formData.append("primary", primary.toString());
     }

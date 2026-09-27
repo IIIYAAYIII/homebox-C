@@ -1457,3 +1457,5 @@ export interface ValidateErrorResponse {
   error: string;
   fields: string;
 }
+
+export { AttachmentTypes } from "./non-generated";

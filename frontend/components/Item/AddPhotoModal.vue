@@ -44,7 +44,7 @@
     setPrimaryPhoto,
     type PhotoPreview,
   } from "~/components/Form/photo-uploader";
-  import { AttachmentTypes } from "~/lib/api/types/data-contracts";
+  import { AttachmentTypes } from "~/lib/api/types/non-generated";
   import { Button } from "~/components/ui/button";
 
   const props = defineProps<{

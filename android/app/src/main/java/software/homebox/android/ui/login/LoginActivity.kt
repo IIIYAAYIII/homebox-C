@@ -41,10 +41,10 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun performLogin() {
-        val email = binding.etEmail.text.toString().trim()
+        val usernameOrEmail = binding.etEmail.text.toString().trim()
         val password = binding.etPassword.text.toString().trim()
 
-        if (email.isBlank()) {
+        if (usernameOrEmail.isBlank()) {
             binding.etEmail.error = getString(R.string.email_hint)
             return
         }
@@ -60,13 +60,13 @@ class LoginActivity : AppCompatActivity() {
             try {
                 val service = ApiClient.getService()
                 val response = withContext(Dispatchers.IO) {
-                    service.login(LoginRequest(username = email, email = email, password = password, stayLoggedIn = true))
+                    service.login(LoginRequest(username = usernameOrEmail, email = usernameOrEmail, password = password, stayLoggedIn = true))
                 }
 
                 if (response.isSuccessful && response.body() != null) {
                     val tokenResp = response.body()!!
                     AppPreferences.authToken = tokenResp.token
-                    AppPreferences.userEmail = email
+                    AppPreferences.userEmail = usernameOrEmail
 
                     Toast.makeText(this@LoginActivity, getString(R.string.app_name) + " - OK", Toast.LENGTH_SHORT).show()
                     val intent = Intent(this@LoginActivity, MainActivity::class.java).apply {
@@ -76,12 +76,12 @@ class LoginActivity : AppCompatActivity() {
                     finish()
                 } else {
                     val code = response.code()
-                    val errorDetail = if (code == 401) {
-                        " (账号或密码错误)"
-                    } else if (code == 400) {
-                        " (请求错误: 400)"
-                    } else {
-                        " (HTTP $code)"
+                    val errBody = try { response.errorBody()?.string() } catch (_: Exception) { null }
+                    val errorDetail = when {
+                        !errBody.isNullOrBlank() && !errBody.startsWith("<") && !errBody.startsWith("{") -> " ($errBody)"
+                        code == 401 -> " (账号或密码错误)"
+                        code == 400 -> " (请求参数错误: 400)"
+                        else -> " (HTTP $code)"
                     }
                     Toast.makeText(this@LoginActivity, getString(R.string.login_failed) + errorDetail, Toast.LENGTH_LONG).show()
                 }

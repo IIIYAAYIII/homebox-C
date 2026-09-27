@@ -1,7 +1,9 @@
 package software.homebox.android.data.api
 
 import okhttp3.Interceptor
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
+import okhttp3.RequestBody
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -29,6 +31,23 @@ object ApiClient {
         }
 
         builder.header("Accept", "application/json")
+
+        // Ensure JSON requests send clean Content-Type: application/json without charset suffix
+        val originalBody = original.body
+        if (originalBody != null) {
+            val ct = originalBody.contentType()?.toString()
+            if (ct != null && ct.startsWith("application/json", ignoreCase = true)) {
+                val cleanJsonType = "application/json".toMediaTypeOrNull()
+                val newBody = object : RequestBody() {
+                    override fun contentType() = cleanJsonType
+                    override fun contentLength() = originalBody.contentLength()
+                    override fun writeTo(sink: okio.BufferedSink) = originalBody.writeTo(sink)
+                }
+                builder.method(original.method, newBody)
+                builder.header("Content-Type", "application/json")
+            }
+        }
+
         chain.proceed(builder.build())
     }
 

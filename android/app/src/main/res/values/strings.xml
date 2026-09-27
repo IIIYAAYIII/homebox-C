@@ -14,7 +14,7 @@
     <!-- Login -->
     <string name="login_title">Account Login</string>
     <string name="login_subtitle">Sign in to your Homebox instance</string>
-    <string name="email_hint">Email Address</string>
+    <string name="email_hint">Email or Username</string>
     <string name="password_hint">Password</string>
     <string name="btn_login">Sign In</string>
     <string name="btn_change_server">Change Server Address</string>

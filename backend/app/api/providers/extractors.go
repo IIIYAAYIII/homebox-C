@@ -2,7 +2,9 @@ package providers
 
 import (
 	"errors"
+	"mime"
 	"net/http"
+	"strings"
 
 	"github.com/hay-kot/httpkit/server"
 	"github.com/rs/zerolog/log"
@@ -11,6 +13,7 @@ import (
 
 type LoginForm struct {
 	Username     string `json:"username"`
+	Email        string `json:"email"`
 	Password     string `json:"password"`
 	StayLoggedIn bool   `json:"stayLoggedIn"`
 }
@@ -18,7 +21,13 @@ type LoginForm struct {
 func getLoginForm(r *http.Request) (LoginForm, error) {
 	loginForm := LoginForm{}
 
-	switch r.Header.Get("Content-Type") {
+	ct := r.Header.Get("Content-Type")
+	mediaType, _, _ := mime.ParseMediaType(ct)
+	if mediaType == "" {
+		mediaType = strings.TrimSpace(strings.Split(ct, ";")[0])
+	}
+
+	switch mediaType {
 	case "application/x-www-form-urlencoded":
 		err := r.ParseForm()
 		if err != nil {
@@ -26,6 +35,9 @@ func getLoginForm(r *http.Request) (LoginForm, error) {
 		}
 
 		loginForm.Username = r.PostFormValue("username")
+		if loginForm.Username == "" {
+			loginForm.Username = r.PostFormValue("email")
+		}
 		loginForm.Password = r.PostFormValue("password")
 		loginForm.StayLoggedIn = r.PostFormValue("stayLoggedIn") == "true"
 	case "application/json":
@@ -36,6 +48,10 @@ func getLoginForm(r *http.Request) (LoginForm, error) {
 		}
 	default:
 		return loginForm, errors.New("invalid content type")
+	}
+
+	if loginForm.Username == "" && loginForm.Email != "" {
+		loginForm.Username = loginForm.Email
 	}
 
 	if loginForm.Username == "" || loginForm.Password == "" {

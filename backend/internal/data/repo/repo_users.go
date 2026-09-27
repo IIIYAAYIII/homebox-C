@@ -131,10 +131,14 @@ func (r *UserRepository) GetOneEmail(ctx context.Context, email string) (UserOut
 		trace.WithAttributes(attribute.Int("user.email.length", len(email))))
 	defer span.End()
 
+	cleanInput := strings.TrimSpace(email)
 	out, err := mapUserOutErr(r.db.User.Query().
-		Where(user.EmailEqualFold(normalizeEmail(email))).
+		Where(user.Or(
+			user.EmailEqualFold(normalizeEmail(cleanInput)),
+			user.NameEqualFold(cleanInput),
+		)).
 		WithGroups().
-		Only(ctx),
+		First(ctx),
 	)
 	if err != nil {
 		// "not found" is expected on bad logins; record on the span but don't mark
@@ -159,9 +163,13 @@ func (r *UserRepository) GetOneEmailNoEdges(ctx context.Context, email string) (
 		trace.WithAttributes(attribute.Int("user.email.length", len(email))))
 	defer span.End()
 
+	cleanInput := strings.TrimSpace(email)
 	out, err := mapUserOutErr(r.db.User.Query().
-		Where(user.EmailEqualFold(normalizeEmail(email))).
-		Only(ctx),
+		Where(user.Or(
+			user.EmailEqualFold(normalizeEmail(cleanInput)),
+			user.NameEqualFold(cleanInput),
+		)).
+		First(ctx),
 	)
 	if err != nil {
 		span.SetAttributes(

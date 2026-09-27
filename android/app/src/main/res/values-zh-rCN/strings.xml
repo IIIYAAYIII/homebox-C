@@ -14,7 +14,7 @@
     <!-- 登录 -->
     <string name="login_title">账号登录</string>
     <string name="login_subtitle">登录到您的 Homebox 资产管理系统</string>
-    <string name="email_hint">登录邮箱</string>
+    <string name="email_hint">登录邮箱或用户名</string>
     <string name="password_hint">密码</string>
     <string name="btn_login">立即登录</string>
     <string name="btn_change_server">更换服务器地址</string>

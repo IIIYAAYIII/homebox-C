@@ -42,8 +42,9 @@ class ItemDetailActivity : AppCompatActivity() {
     }
 
     private val takePhotoLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
-        if (success && cameraTempUri != null) {
-            openPhotoEditor(cameraTempUri!)
+        val uri = cameraTempUri
+        if (success && uri != null) {
+            openPhotoEditor(uri)
         }
     }
 

@@ -176,7 +176,7 @@
                         app:cornerRadius="18dp" />
 
                     <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnRatio1_1"
+                        android:id="@+id/btnRatioOneToOne"
                         style="@style/Widget.Material3.Button.TonalButton"
                         android:layout_width="wrap_content"
                         android:layout_height="36dp"
@@ -186,7 +186,7 @@
                         app:cornerRadius="18dp" />
 
                     <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnRatio4_3"
+                        android:id="@+id/btnRatioFourToThree"
                         style="@style/Widget.Material3.Button.TonalButton"
                         android:layout_width="wrap_content"
                         android:layout_height="36dp"
@@ -196,7 +196,7 @@
                         app:cornerRadius="18dp" />
 
                     <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnRatio16_9"
+                        android:id="@+id/btnRatioSixteenToNine"
                         style="@style/Widget.Material3.Button.TonalButton"
                         android:layout_width="wrap_content"
                         android:layout_height="36dp"

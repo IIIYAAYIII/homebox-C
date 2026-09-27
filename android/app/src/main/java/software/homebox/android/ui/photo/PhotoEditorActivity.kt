@@ -89,9 +89,9 @@ class PhotoEditorActivity : AppCompatActivity() {
 
         // Crop ratios
         binding.btnRatioFree.setOnClickListener { binding.cropOverlay.resetCrop(null) }
-        binding.btnRatio1_1.setOnClickListener { binding.cropOverlay.resetCrop(1f) }
-        binding.btnRatio4_3.setOnClickListener { binding.cropOverlay.resetCrop(4f / 3f) }
-        binding.btnRatio16_9.setOnClickListener { binding.cropOverlay.resetCrop(16f / 9f) }
+        binding.btnRatioOneToOne.setOnClickListener { binding.cropOverlay.resetCrop(1f) }
+        binding.btnRatioFourToThree.setOnClickListener { binding.cropOverlay.resetCrop(4f / 3f) }
+        binding.btnRatioSixteenToNine.setOnClickListener { binding.cropOverlay.resetCrop(16f / 9f) }
         binding.btnApplyCrop.setOnClickListener { applyCrop() }
 
         // Rotate

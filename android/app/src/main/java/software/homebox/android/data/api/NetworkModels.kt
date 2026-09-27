@@ -4,9 +4,14 @@ import com.google.gson.annotations.SerializedName
 import java.io.Serializable
 
 data class StatusResponse(
+    @SerializedName("health") val health: Boolean = false,
     @SerializedName("ok") val ok: Boolean = false,
+    @SerializedName("title") val title: String? = null,
+    @SerializedName("message") val message: String? = null,
     @SerializedName("build") val build: BuildInfo? = null
-)
+) {
+    val isHealthy: Boolean get() = health || ok || build != null || !title.isNullOrBlank()
+}
 
 data class BuildInfo(
     @SerializedName("version") val version: String? = null,
@@ -15,8 +20,10 @@ data class BuildInfo(
 )
 
 data class LoginRequest(
-    @SerializedName("email") val email: String,
-    @SerializedName("password") val password: String
+    @SerializedName("username") val username: String,
+    @SerializedName("email") val email: String = username,
+    @SerializedName("password") val password: String,
+    @SerializedName("stayLoggedIn") val stayLoggedIn: Boolean = true
 )
 
 data class TokenResponse(

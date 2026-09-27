@@ -60,7 +60,7 @@ class LoginActivity : AppCompatActivity() {
             try {
                 val service = ApiClient.getService()
                 val response = withContext(Dispatchers.IO) {
-                    service.login(LoginRequest(email, password))
+                    service.login(LoginRequest(username = email, email = email, password = password, stayLoggedIn = true))
                 }
 
                 if (response.isSuccessful && response.body() != null) {
@@ -75,10 +75,19 @@ class LoginActivity : AppCompatActivity() {
                     startActivity(intent)
                     finish()
                 } else {
-                    Toast.makeText(this@LoginActivity, getString(R.string.login_failed), Toast.LENGTH_LONG).show()
+                    val code = response.code()
+                    val errorDetail = if (code == 401) {
+                        " (账号或密码错误)"
+                    } else if (code == 400) {
+                        " (请求错误: 400)"
+                    } else {
+                        " (HTTP $code)"
+                    }
+                    Toast.makeText(this@LoginActivity, getString(R.string.login_failed) + errorDetail, Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
-                Toast.makeText(this@LoginActivity, getString(R.string.login_failed) + ": " + e.localizedMessage, Toast.LENGTH_LONG).show()
+                val errMsg = e.localizedMessage ?: e.javaClass.simpleName
+                Toast.makeText(this@LoginActivity, getString(R.string.login_failed) + ": " + errMsg, Toast.LENGTH_LONG).show()
             } finally {
                 binding.btnLogin.isEnabled = true
                 binding.pbLoading.visibility = View.GONE

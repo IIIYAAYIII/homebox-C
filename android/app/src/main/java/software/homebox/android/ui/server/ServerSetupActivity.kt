@@ -43,23 +43,29 @@ class ServerSetupActivity : AppCompatActivity() {
         }
 
         binding.btnContinue.setOnClickListener {
-            val url = binding.etServerUrl.text.toString().trim()
-            if (url.isBlank()) {
+            val rawUrl = binding.etServerUrl.text.toString().trim()
+            if (rawUrl.isBlank()) {
                 binding.tilServerUrl.error = getString(R.string.server_address_hint)
                 return@setOnClickListener
             }
-            AppPreferences.serverUrl = url
+            val cleanedUrl = ApiClient.cleanUrl(rawUrl)
+            AppPreferences.serverUrl = cleanedUrl
             startActivity(Intent(this, LoginActivity::class.java))
         }
     }
 
     private fun testServerConnection() {
-        val inputUrl = binding.etServerUrl.text.toString().trim()
-        if (inputUrl.isBlank()) {
+        val rawInput = binding.etServerUrl.text.toString().trim()
+        if (rawInput.isBlank()) {
             binding.tilServerUrl.error = getString(R.string.server_address_hint)
             return
         }
         binding.tilServerUrl.error = null
+
+        val inputUrl = ApiClient.cleanUrl(rawInput)
+        // Auto-fill the cleaned URL back into the input field so user sees the valid scheme
+        binding.etServerUrl.setText(inputUrl)
+        binding.etServerUrl.setSelection(inputUrl.length)
 
         binding.tvStatus.visibility = View.VISIBLE
         binding.tvStatus.text = getString(R.string.server_status_checking)
@@ -73,16 +79,19 @@ class ServerSetupActivity : AppCompatActivity() {
                     service.getStatus()
                 }
 
-                if (response.isSuccessful && response.body()?.ok == true) {
-                    val version = response.body()?.build?.version ?: "OK"
+                val body = response.body()
+                if (response.isSuccessful && (body?.isHealthy == true || response.code() == 200)) {
+                    val version = body?.build?.version ?: body?.title ?: "OK"
                     binding.tvStatus.text = getString(R.string.server_status_ok, version)
                     binding.tvStatus.setTextColor(getColor(R.color.success))
                 } else {
-                    binding.tvStatus.text = getString(R.string.server_status_failed)
+                    val code = response.code()
+                    binding.tvStatus.text = "${getString(R.string.server_status_failed)} (HTTP $code)"
                     binding.tvStatus.setTextColor(getColor(R.color.error))
                 }
             } catch (e: Exception) {
-                binding.tvStatus.text = getString(R.string.server_status_failed) + "\n(" + e.localizedMessage + ")"
+                val errMsg = e.localizedMessage ?: e.javaClass.simpleName
+                binding.tvStatus.text = "${getString(R.string.server_status_failed)}\n($errMsg)"
                 binding.tvStatus.setTextColor(getColor(R.color.error))
             } finally {
                 binding.btnTestConnection.isEnabled = true

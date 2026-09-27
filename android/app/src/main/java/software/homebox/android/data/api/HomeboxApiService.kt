@@ -21,7 +21,7 @@ interface HomeboxApiService {
     suspend fun getEntities(
         @Query("q") query: String? = null,
         @Query("page") page: Int = 1,
-        @Query("page_size") pageSize: Int = 50,
+        @Query("pageSize") pageSize: Int = 50,
         @Query("type") type: String? = null,
         @Query("location_id") locationId: String? = null
     ): Response<EntitiesResponse>

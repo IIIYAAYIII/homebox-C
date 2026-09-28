@@ -41,7 +41,7 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/location_selector_clear"
             android:src="@drawable/ic_close"
-            app:tint="@color/on_surface_variant" />
+            app:tint="@color/text_secondary" />
     </RelativeLayout>
 
     <!-- Search Input Box -->
@@ -58,7 +58,7 @@
         app:boxStrokeColor="@color/primary"
         app:hintEnabled="false"
         app:startIconDrawable="@drawable/ic_search"
-        app:startIconTint="@color/on_surface_variant">
+        app:startIconTint="@color/text_secondary">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/etLocationSearch"
@@ -89,7 +89,7 @@
         android:layout_marginVertical="24dp"
         android:gravity="center"
         android:text="@string/location_none_found"
-        android:textColor="@color/on_surface_variant"
+        android:textColor="@color/text_secondary"
         android:textSize="14sp"
         android:visibility="gone" />
 

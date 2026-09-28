@@ -41,7 +41,7 @@
                 android:clickable="true"
                 android:focusable="true"
                 app:cardCornerRadius="8dp"
-                app:strokeColor="@color/outline">
+                app:strokeColor="@color/card_stroke">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -81,7 +81,7 @@
                             android:ellipsize="end"
                             android:maxLines="1"
                             android:text="@string/location_selector_hint"
-                            android:textColor="@color/on_surface_variant"
+                            android:textColor="@color/text_secondary"
                             android:textSize="15sp" />
                     </LinearLayout>
 
@@ -94,7 +94,7 @@
                         android:contentDescription="@string/location_selector_clear"
                         android:src="@drawable/ic_close"
                         android:visibility="gone"
-                        app:tint="@color/on_surface_variant" />
+                        app:tint="@color/text_secondary" />
 
                     <ImageView
                         android:id="@+id/ivLocationDropdownArrow"
@@ -103,7 +103,7 @@
                         android:layout_marginStart="4dp"
                         android:contentDescription="@null"
                         android:src="@drawable/ic_chevron_down"
-                        app:tint="@color/on_surface_variant" />
+                        app:tint="@color/text_secondary" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

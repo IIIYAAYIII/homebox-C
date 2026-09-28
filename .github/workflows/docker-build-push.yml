@@ -107,7 +107,7 @@ jobs:
             LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
             SHORT_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo "HEAD")
             if [ -n "$LATEST_TAG" ]; then
-              echo "version=${LATEST_TAG} (${SHORT_SHA})" >> $GITHUB_OUTPUT
+              echo "version=${LATEST_TAG}-${SHORT_SHA}" >> $GITHUB_OUTPUT
             else
               echo "version=nightly-${SHORT_SHA}" >> $GITHUB_OUTPUT
             fi

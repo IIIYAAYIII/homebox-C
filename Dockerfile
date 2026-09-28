@@ -57,11 +57,11 @@ COPY --from=frontend-builder /app/.output/public ./app/api/static/public
 RUN --mount=type=cache,target=/root/.cache/go-build \
     if [ "$TARGETARCH" = "arm" ] || [ "$TARGETARCH" = "riscv64" ];  \
     then echo "nodynamic" $TARGETOS $TARGETARCH; CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build \
-        -ldflags "-s -w -X main.commit=$COMMIT -X main.buildTime=$BUILD_TIME -X main.version=$VERSION" \
+        -ldflags "-s -w -X 'main.commit=$COMMIT' -X 'main.buildTime=$BUILD_TIME' -X 'main.version=$VERSION'" \
         -tags nodynamic -o /go/bin/api -v ./app/api/*.go; \
     else \
          echo $TARGETOS $TARGETARCH; CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build \
-        -ldflags "-s -w -X main.commit=$COMMIT -X main.buildTime=$BUILD_TIME -X main.version=$VERSION" \
+        -ldflags "-s -w -X 'main.commit=$COMMIT' -X 'main.buildTime=$BUILD_TIME' -X 'main.version=$VERSION'" \
         -o /go/bin/api -v ./app/api/*.go; \
     fi
 

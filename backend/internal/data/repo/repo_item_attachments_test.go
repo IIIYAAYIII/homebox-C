@@ -472,3 +472,61 @@ func TestAttachmentRepo_MigrateLegacyFlatPaths_TargetExistsKeepsSource(t *testin
 	require.NoError(t, err)
 	assert.Equal(t, "new", string(dst), "target file should not be overwritten")
 }
+
+func TestAttachmentRepo_RootFileStorage(t *testing.T) {
+	// Case 1: Docker default / legacy env where ConnString is file:///?no_tmp_dir=true and PrefixPath is "data"
+	repoDockerRoot := &AttachmentRepo{
+		storage: config.Storage{
+			ConnString: "file:///?no_tmp_dir=true",
+			PrefixPath: "data",
+		},
+	}
+	assert.True(t, repoDockerRoot.isRootFileStorage())
+	assert.Equal(t, "file:///data?no_tmp_dir=true", repoDockerRoot.GetConnString())
+	assert.Equal(t, "group-id/documents/hash.png", repoDockerRoot.fullPath("group-id/documents/hash.png"))
+
+	// Case 2: Plain root file:///
+	repoPlainRoot := &AttachmentRepo{
+		storage: config.Storage{
+			ConnString: "file:///",
+			PrefixPath: "data",
+		},
+	}
+	assert.True(t, repoPlainRoot.isRootFileStorage())
+	assert.Equal(t, "file:///data", repoPlainRoot.GetConnString())
+	assert.Equal(t, "group-id/documents/hash.png", repoPlainRoot.fullPath("group-id/documents/hash.png"))
+
+	// Case 3: Explicit directory file:///data?no_tmp_dir=true with empty prefix
+	repoExplicitDir := &AttachmentRepo{
+		storage: config.Storage{
+			ConnString: "file:///data?no_tmp_dir=true",
+			PrefixPath: "",
+		},
+	}
+	assert.False(t, repoExplicitDir.isRootFileStorage())
+	assert.Equal(t, "file:///data?no_tmp_dir=true", repoExplicitDir.GetConnString())
+	assert.Equal(t, "group-id/documents/hash.png", repoExplicitDir.fullPath("group-id/documents/hash.png"))
+
+	// Case 4: Standard local relative path file:///./ with .data prefix
+	repoLocalRel := &AttachmentRepo{
+		storage: config.Storage{
+			ConnString: "file:///./",
+			PrefixPath: ".data",
+		},
+	}
+	assert.False(t, repoLocalRel.isRootFileStorage())
+	assert.Contains(t, repoLocalRel.GetConnString(), "?no_tmp_dir=true")
+	assert.Equal(t, ".data/group-id/documents/hash.png", repoLocalRel.fullPath("group-id/documents/hash.png"))
+
+	// Case 5: Cloud storage backend (e.g. S3)
+	repoS3 := &AttachmentRepo{
+		storage: config.Storage{
+			ConnString: "s3://my-bucket",
+			PrefixPath: "data",
+		},
+	}
+	assert.False(t, repoS3.isRootFileStorage())
+	assert.Equal(t, "s3://my-bucket", repoS3.GetConnString())
+	assert.Equal(t, "data/group-id/documents/hash.png", repoS3.fullPath("group-id/documents/hash.png"))
+}
+

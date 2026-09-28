@@ -240,10 +240,37 @@ func (r *AttachmentRepo) path(gid uuid.UUID, hash string) string {
 	return fmt.Sprintf("%s/documents/%s", gid.String(), hash)
 }
 
+// isRootFileStorage checks if the storage backend is a local file URL pointing to the root directory
+// ("/" or empty path, like "file:///?no_tmp_dir=true").
+// In gocloud.dev/blob/fileblob v0.46.0, opening a bucket at "/" triggers a bug where
+// bucketRootPath is computed as "/" + "/" = "//", causing all valid file paths (which start
+// with a single "/") to fail with "escapes bucket root".
+// When this condition is met and PrefixPath is set, we merge PrefixPath into the bucket URL
+// and keep relative keys unprefixed, preserving on-disk compatibility without escaping errors.
+func (r *AttachmentRepo) isRootFileStorage() bool {
+	if !strings.HasPrefix(r.storage.ConnString, "file://") {
+		return false
+	}
+	if strings.HasPrefix(r.storage.ConnString, "file:///./") {
+		return false
+	}
+	raw := strings.TrimPrefix(strings.ReplaceAll(r.storage.ConnString, "\\", "/"), "file://")
+	if i := strings.IndexAny(raw, "?#"); i >= 0 {
+		raw = raw[:i]
+	}
+	cleanPath := filepath.Clean(raw)
+	return (cleanPath == "/" || cleanPath == "." || cleanPath == "") && r.storage.PrefixPath != ""
+}
+
 func (r *AttachmentRepo) fullPath(relativePath string) string {
 	// Normalize path separators to forward slashes for blob storage
 	// The blob library expects forward slashes in keys regardless of OS
 	normalizedRelativePath := normalizePath(relativePath)
+
+	// If root file storage merged PrefixPath into the bucket URL, do not duplicate it in the key
+	if r.isRootFileStorage() {
+		return normalizedRelativePath
+	}
 
 	// Always use forward slashes when joining paths for blob storage
 	if r.storage.PrefixPath == "" {
@@ -263,6 +290,18 @@ func (r *AttachmentRepo) GetFullPath(relativePath string) string {
 }
 
 func (r *AttachmentRepo) GetConnString() string {
+	// If the file storage URL points to root "/" and has a PrefixPath, merge PrefixPath into the bucket URL.
+	// This avoids a bug in gocloud.dev/blob/fileblob v0.46.0 where bucket root "/" checks against "//",
+	// which causes all keys to be falsely rejected with "escapes bucket root".
+	if r.isRootFileStorage() {
+		prefix := normalizePath(r.storage.PrefixPath)
+		query := ""
+		if i := strings.Index(r.storage.ConnString, "?"); i >= 0 {
+			query = r.storage.ConnString[i:]
+		}
+		return fmt.Sprintf("file:///%s%s", prefix, query)
+	}
+
 	// Handle the default case for file storage
 	// which is file:///./ meaning relative to the current working directory
 	if strings.HasPrefix(r.storage.ConnString, "file:///./") {

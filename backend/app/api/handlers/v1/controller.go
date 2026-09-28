@@ -116,6 +116,12 @@ type (
 		Version   string `json:"version"`
 		Commit    string `json:"commit"`
 		BuildTime string `json:"buildTime"`
+		GoVersion string `json:"goVersion,omitempty"`
+		OS        string `json:"os,omitempty"`
+		Arch      string `json:"arch,omitempty"`
+		Database  string `json:"database,omitempty"`
+		Storage   string `json:"storage,omitempty"`
+		Mode      string `json:"mode,omitempty"`
 	}
 
 	APISummary struct {

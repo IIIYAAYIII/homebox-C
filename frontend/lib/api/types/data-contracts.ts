@@ -1345,6 +1345,12 @@ export interface Build {
   buildTime: string;
   commit: string;
   version: string;
+  goVersion?: string;
+  os?: string;
+  arch?: string;
+  database?: string;
+  storage?: string;
+  mode?: string;
 }
 
 export interface ChangePassword {

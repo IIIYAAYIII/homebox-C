@@ -67,11 +67,19 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 
 # Production stage
 FROM alpine:latest
+ARG TARGETARCH
+ARG BUILD_TIME=now
+ARG COMMIT=HEAD
+ARG VERSION=nightly
+
 ENV HBOX_MODE=production
 ENV HBOX_STORAGE_CONN_STRING=file:///?no_tmp_dir=true
 ENV HBOX_STORAGE_PREFIX_PATH=data
 ENV HBOX_DATABASE_SQLITE_PATH=/data/homebox.db?_pragma=busy_timeout=2000&_pragma=journal_mode=WAL&_fk=1&_time_format=sqlite
 ENV HBOX_AUTH_API_KEY_PEPPER=homebox_default_secret_pepper_min_32_bytes_safe_fallback
+ENV HBOX_VERSION=${VERSION}
+ENV HBOX_COMMIT=${COMMIT}
+ENV HBOX_BUILD_TIME=${BUILD_TIME}
 
 # Install necessary runtime dependencies
 RUN apk --no-cache add ca-certificates wget mosquitto-clients && \
@@ -83,8 +91,9 @@ COPY --from=builder /go/bin/api /app
 RUN chmod +x /app/api
 
 # Labels and configuration for the final image
-LABEL Name=homebox Version=0.0.1
-LABEL org.opencontainers.image.source="https://github.com/sysadminsmedia/homebox"
+LABEL Name=homebox
+LABEL Version=${VERSION}
+LABEL org.opencontainers.image.source="https://github.com/IIIYAAYIII/homebox-C"
 
 # Expose necessary ports for Homebox
 EXPOSE 7745

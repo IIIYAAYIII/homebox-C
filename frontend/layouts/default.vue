@@ -154,6 +154,22 @@
         </SidebarContent>
 
         <SidebarFooter>
+          <NuxtLink
+            to="/collection/about"
+            class="flex items-center justify-between rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground group-data-[collapsible=icon]:justify-center"
+            :title="$t('about.title')"
+          >
+            <span class="truncate font-mono font-medium group-data-[collapsible=icon]:hidden">
+              {{ status?.build?.version ? 'v' + status.build.version.replace(/^v/, '') : 'Homebox' }}
+            </span>
+            <span
+              v-if="status?.build?.commit && status?.build?.commit !== 'HEAD'"
+              class="font-mono text-[10px] text-muted-foreground group-data-[collapsible=icon]:hidden"
+            >
+              {{ status.build.commit.slice(0, 7) }}
+            </span>
+            <MdiInformationOutline class="hidden size-4 group-data-[collapsible=icon]:block" />
+          </NuxtLink>
           <div class="flex items-center justify-between px-2 py-1 group-data-[collapsible=icon]:justify-center">
             <span class="text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
               {{ $t("profile.language") || "Language" }}
@@ -263,6 +279,7 @@
   import MdiLogout from "~icons/mdi/logout";
   import MdiFileDocumentMultiple from "~icons/mdi/file-document-multiple";
   import MdiChevronRight from "~icons/mdi/chevron-right";
+  import MdiInformationOutline from "~icons/mdi/information-outline";
 
   import {
     Sidebar,
@@ -500,6 +517,12 @@
           active: computed(() => route.path === "/collection/tools"),
           name: computed(() => t("collection.tabs.tools")),
           to: "/collection/tools",
+        },
+        {
+          id: 67,
+          active: computed(() => route.path === "/collection/about"),
+          name: computed(() => t("collection.tabs.about")),
+          to: "/collection/about",
         },
       ],
     },

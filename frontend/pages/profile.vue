@@ -9,8 +9,10 @@
   import MdiKeyVariant from "~icons/mdi/key-variant";
   import MdiContentCopy from "~icons/mdi/content-copy";
   import MdiHomeCityOutline from "~icons/mdi/home-city-outline";
+  import MdiInformationOutline from "~icons/mdi/information-outline";
   import MdiPlus from "~icons/mdi/plus";
   import { Button } from "@/components/ui/button";
+  import { Badge } from "@/components/ui/badge";
   import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
   import { useDialog } from "@/components/ui/dialog-provider";
   import LanguageSelector from "~/components/App/LanguageSelector.vue";
@@ -39,6 +41,11 @@
   });
 
   const api = useUserApi();
+  const pubApi = usePublicApi();
+  const { data: status } = useAsyncData(async () => {
+    const { data } = await pubApi.status();
+    return data;
+  });
   const confirm = useConfirm();
 
   const { openDialog, closeDialog } = useDialog();
@@ -582,6 +589,37 @@
             </Button>
           </div>
           <ThemePicker />
+        </div>
+      </BaseCard>
+
+      <BaseCard>
+        <template #title>
+          <BaseSectionHeader>
+            <MdiInformationOutline class="-mt-1 mr-2" />
+            <span> {{ $t("about.title") }} </span>
+            <template #description> {{ $t("about.description") }} </template>
+          </BaseSectionHeader>
+        </template>
+        <div class="space-y-4 px-4 pb-4">
+          <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-muted/20 p-3">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="font-medium text-sm">{{ $t("about.version") }}:</span>
+                <Badge variant="default" class="font-mono text-xs">
+                  {{ status?.build?.version ? 'v' + status.build.version.replace(/^v/, '') : 'nightly' }}
+                </Badge>
+              </div>
+              <p class="mt-1 text-xs text-muted-foreground">
+                {{ $t("about.commit") }}: {{ status?.build?.commit ? status.build.commit.slice(0, 7) : 'HEAD' }} ·
+                {{ $t("about.build_time") }}: {{ status?.build?.buildTime || 'now' }}
+              </p>
+            </div>
+            <Button size="sm" variant="secondary" as-child>
+              <NuxtLink to="/collection/about">
+                {{ $t("about.view_full_details") }}
+              </NuxtLink>
+            </Button>
+          </div>
         </div>
       </BaseCard>
 

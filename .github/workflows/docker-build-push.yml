@@ -16,6 +16,9 @@ on:
         type: boolean
         required: false
         default: true
+  push:
+    tags:
+      - 'v*'
 
 permissions:
   contents: read
@@ -27,6 +30,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Get current timestamp
         id: time
@@ -91,6 +96,23 @@ jobs:
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' }}
             type=raw,value=${{ inputs.tag_name }},enable=${{ inputs.tag_name != '' }}
 
+      - name: Determine effective version
+        id: eff_ver
+        run: |
+          if [ -n "${{ inputs.tag_name }}" ] && [ "${{ inputs.tag_name }}" != "latest" ]; then
+            echo "version=${{ inputs.tag_name }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          else
+            LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+            SHORT_SHA=$(git rev-parse --short HEAD 2>/dev/null || echo "HEAD")
+            if [ -n "$LATEST_TAG" ]; then
+              echo "version=${LATEST_TAG} (${SHORT_SHA})" >> $GITHUB_OUTPUT
+            else
+              echo "version=nightly-${SHORT_SHA}" >> $GITHUB_OUTPUT
+            fi
+          fi
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
@@ -101,7 +123,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
-            VERSION=${{ steps.meta.outputs.version || github.ref_name }}
+            VERSION=${{ steps.eff_ver.outputs.version }}
             COMMIT=${{ github.sha }}
             BUILD_TIME=${{ steps.time.outputs.now }}
           cache-from: type=gha

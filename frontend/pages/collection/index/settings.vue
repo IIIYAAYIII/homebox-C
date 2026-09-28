@@ -5,8 +5,10 @@
   import { Label } from "@/components/ui/label";
   import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
   import MdiLoading from "~icons/mdi/loading";
+  import MdiInformationOutline from "~icons/mdi/information-outline";
+  import { Badge } from "@/components/ui/badge";
   import FormTextField from "~/components/Form/TextField.vue";
-  import type { CurrenciesCurrency, Group } from "~~/lib/api/types/data-contracts";
+  import type { CurrenciesCurrency, Group, APISummary } from "~~/lib/api/types/data-contracts";
   import { fmtCurrencyAsync } from "~/composables/utils";
 
   definePageMeta({
@@ -18,6 +20,11 @@
   useHead({ title: `HomeBox | ${t("collection.tabs.settings")}` });
 
   const api = useUserApi();
+  const pubApi = usePublicApi();
+  const { data: status } = useAsyncData(async () => {
+    const { data } = await pubApi.status();
+    return data;
+  });
   const { selectedCollection, load: reloadCollections } = useCollections();
 
   const loading = ref(true);
@@ -164,6 +171,35 @@
           <Button variant="secondary" size="sm" :disabled="saving" @click="save">
             <MdiLoading v-if="saving" class="mr-2 inline-block animate-spin" />
             <span>{{ $t("profile.update_group") }}</span>
+          </Button>
+        </div>
+      </div>
+    </div>
+
+    <!-- System About & Version Card -->
+    <div class="rounded-md border bg-card p-4 shadow-sm">
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div class="space-y-1">
+          <div class="flex items-center gap-2">
+            <MdiInformationOutline class="size-5 text-primary" />
+            <h3 class="text-base font-semibold">{{ $t("about.title") }}</h3>
+            <Badge variant="outline" class="font-mono text-xs">
+              {{ status?.build?.version ? 'v' + status.build.version.replace(/^v/, '') : 'nightly' }}
+            </Badge>
+          </div>
+          <p class="text-xs text-muted-foreground">
+            {{ $t("about.commit") }}:
+            <span class="font-mono">{{ status?.build?.commit ? status.build.commit.slice(0, 7) : 'HEAD' }}</span>
+            <span class="mx-1.5">·</span>
+            {{ $t("about.build_time") }}:
+            <span class="font-mono">{{ status?.build?.buildTime || 'now' }}</span>
+          </p>
+        </div>
+        <div>
+          <Button variant="outline" size="sm" as-child>
+            <NuxtLink to="/collection/about" class="flex items-center gap-1.5">
+              <span>{{ $t("about.view_full_details") }}</span>
+            </NuxtLink>
           </Button>
         </div>
       </div>

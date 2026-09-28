@@ -11,6 +11,7 @@
   import MdiCog from "~icons/mdi/cog";
   import MdiShape from "~icons/mdi/shape";
   import MdiWrench from "~icons/mdi/wrench";
+  import MdiInformationOutline from "~icons/mdi/information-outline";
   import MdiLogout from "~icons/mdi/logout";
   import MdiDelete from "~icons/mdi/delete";
   import type { UserSummary } from "~/lib/api/types/data-contracts";
@@ -66,6 +67,12 @@
       label: "collection.tabs.tools",
       to: "/collection/tools",
       icon: MdiWrench,
+    },
+    {
+      id: "about",
+      label: "collection.tabs.about",
+      to: "/collection/about",
+      icon: MdiInformationOutline,
     },
   ]);
 

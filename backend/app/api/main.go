@@ -56,6 +56,24 @@ var (
 	buildTime = "now"
 )
 
+func init() {
+	if envVer := strings.TrimSpace(os.Getenv("HBOX_VERSION")); envVer != "" {
+		version = envVer
+	} else if envVer := strings.TrimSpace(os.Getenv("VERSION")); envVer != "" {
+		version = envVer
+	}
+	if envCommit := strings.TrimSpace(os.Getenv("HBOX_COMMIT")); envCommit != "" {
+		commit = envCommit
+	} else if envCommit := strings.TrimSpace(os.Getenv("COMMIT")); envCommit != "" {
+		commit = envCommit
+	}
+	if envBuildTime := strings.TrimSpace(os.Getenv("HBOX_BUILD_TIME")); envBuildTime != "" {
+		buildTime = envBuildTime
+	} else if envBuildTime := strings.TrimSpace(os.Getenv("BUILD_TIME")); envBuildTime != "" {
+		buildTime = envBuildTime
+	}
+}
+
 func build() string {
 	short := commit
 	if len(commit) > 7 {

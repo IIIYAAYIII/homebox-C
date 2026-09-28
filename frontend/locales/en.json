@@ -35,6 +35,7 @@
         "no_invites": "No invites",
         "remaining_uses": "Remaining uses",
         "tabs": {
+            "about": "About",
             "entity_types": "Entity Types",
             "invites": "Invites",
             "members": "Members",
@@ -43,6 +44,49 @@
             "tools": "Tools"
         },
         "uses": "Uses"
+    },
+    "about": {
+        "title": "About System",
+        "description": "View Homebox version, runtime environment, and component status",
+        "version_and_build": "Version & Build Information",
+        "version": "System Version",
+        "docker_tag": "Docker Image Tag",
+        "commit": "Git Commit",
+        "view_commit_github": "View commit on GitHub",
+        "build_time": "Build Time",
+        "latest_release": "Official Latest Release",
+        "up_to_date": "Up to date",
+        "update_available": "Update Available",
+        "check_update": "Check for Updates",
+        "copy_diag": "Copy Diagnostics",
+        "diag_copied": "System diagnostics copied to clipboard!",
+        "system_info": "System & Runtime Environment",
+        "os_arch": "OS & Architecture",
+        "runtime": "Go Runtime",
+        "mode": "Application Mode",
+        "database": "Database Driver",
+        "storage": "Storage Driver/Path",
+        "health_status": "Health Status",
+        "healthy": "Healthy",
+        "unhealthy": "Unhealthy",
+        "feature_status": "Feature & Service Status",
+        "registration": "User Registration",
+        "label_printing": "Barcode/Label Printing",
+        "oidc": "Single Sign-On (OIDC)",
+        "demo_mode": "Demo Mode",
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "links": "Resources & Links",
+        "github_repo": "GitHub Repository",
+        "releases": "Releases & Changelog",
+        "android_app": "Android Mobile App Build",
+        "docs": "Documentation",
+        "view_full_details": "View System Details",
+        "unknown": "Unknown",
+        "toast": {
+            "failed_load_status": "Failed to load system status",
+            "copy_failed": "Failed to copy to clipboard"
+        }
     },
     "components": {
         "app": {

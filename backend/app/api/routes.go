@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"path"
 	"path/filepath"
+	"runtime"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/hay-kot/httpkit/errchain"
@@ -96,6 +97,12 @@ func (a *app) mountRoutes(r *chi.Mux, chain *errchain.ErrChain, repos *repo.AllR
 			Version:   version,
 			Commit:    commit,
 			BuildTime: buildTime,
+			GoVersion: runtime.Version(),
+			OS:        runtime.GOOS,
+			Arch:      runtime.GOARCH,
+			Database:  a.conf.Database.Driver,
+			Storage:   a.conf.Storage.PrefixPath,
+			Mode:      a.conf.Mode,
 		})))
 
 		r.Get("/currencies", chain.ToHandlerFunc(v1Ctrl.HandleCurrency()))

@@ -2,6 +2,7 @@ package v1
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"path/filepath"
@@ -12,6 +13,7 @@ import (
 	"github.com/hay-kot/httpkit/server"
 	"github.com/rs/zerolog/log"
 	"github.com/sysadminsmedia/homebox/backend/internal/core/services"
+	"github.com/sysadminsmedia/homebox/backend/internal/data/ent"
 	"github.com/sysadminsmedia/homebox/backend/internal/data/ent/attachment"
 	"github.com/sysadminsmedia/homebox/backend/internal/data/repo"
 	"github.com/sysadminsmedia/homebox/backend/internal/sys/validate"
@@ -79,6 +81,9 @@ func (ctrl *V1Controller) HandleEntityAttachmentCreate() errchain.HandlerFunc {
 				return validate.NewRequestError(err, http.StatusInternalServerError)
 			}
 		}
+		if file != nil {
+			defer file.Close()
+		}
 
 		attachmentName := r.FormValue("name")
 		if attachmentName == "" && fileHeader != nil && fileHeader.Filename != "" {
@@ -142,7 +147,10 @@ func (ctrl *V1Controller) HandleEntityAttachmentCreate() errchain.HandlerFunc {
 		if err != nil {
 			recordCtrlSpanError(span, err)
 			log.Err(err).Msg("failed to add attachment")
-			return validate.NewRequestError(err, http.StatusInternalServerError)
+			if ent.IsNotFound(err) {
+				return validate.NewRequestError(fmt.Errorf("item not found: %w", err), http.StatusNotFound)
+			}
+			return validate.NewRequestError(fmt.Errorf("failed to add attachment: %w", err), http.StatusInternalServerError)
 		}
 
 		return server.JSON(w, http.StatusCreated, item)

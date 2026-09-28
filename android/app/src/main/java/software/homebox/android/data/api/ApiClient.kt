@@ -52,7 +52,7 @@ object ApiClient {
     }
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
-        level = HttpLoggingInterceptor.Level.BODY
+        level = HttpLoggingInterceptor.Level.HEADERS
     }
 
     // Build OkHttpClient supporting self-signed certificates for self-hosted instances
@@ -72,17 +72,17 @@ object ApiClient {
             OkHttpClient.Builder()
                 .sslSocketFactory(sslContext.socketFactory, trustAllCerts[0] as X509TrustManager)
                 .hostnameVerifier { _, _ -> true }
-                .connectTimeout(15, TimeUnit.SECONDS)
-                .readTimeout(15, TimeUnit.SECONDS)
-                .writeTimeout(15, TimeUnit.SECONDS)
+                .connectTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(60, TimeUnit.SECONDS)
+                .writeTimeout(60, TimeUnit.SECONDS)
                 .addInterceptor(authInterceptor)
                 .addInterceptor(loggingInterceptor)
                 .build()
         } catch (e: Exception) {
             OkHttpClient.Builder()
-                .connectTimeout(15, TimeUnit.SECONDS)
-                .readTimeout(15, TimeUnit.SECONDS)
-                .writeTimeout(15, TimeUnit.SECONDS)
+                .connectTimeout(30, TimeUnit.SECONDS)
+                .readTimeout(60, TimeUnit.SECONDS)
+                .writeTimeout(60, TimeUnit.SECONDS)
                 .addInterceptor(authInterceptor)
                 .addInterceptor(loggingInterceptor)
                 .build()

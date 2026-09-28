@@ -98,8 +98,10 @@ type (
 
 		// Identifications — optional at create time; populated e.g. by the
 		// barcode product-search import flow (#1578).
-		ModelNumber  string `json:"modelNumber"  validate:"max=255" extensions:"x-nullable,x-omitempty"`
-		Manufacturer string `json:"manufacturer" validate:"max=255" extensions:"x-nullable,x-omitempty"`
+		ModelNumber   string  `json:"modelNumber"   validate:"max=255" extensions:"x-nullable,x-omitempty"`
+		Manufacturer  string  `json:"manufacturer"  validate:"max=255" extensions:"x-nullable,x-omitempty"`
+		SerialNumber  string  `json:"serialNumber"  validate:"max=255" extensions:"x-nullable,x-omitempty"`
+		PurchasePrice float64 `json:"purchasePrice" extensions:"x-nullable,x-omitempty"`
 
 		// Edges
 		TagIDs []uuid.UUID `json:"tagIds"`
@@ -1073,6 +1075,13 @@ func (r *EntityRepository) Create(ctx context.Context, gid uuid.UUID, data Entit
 		SetManufacturer(data.Manufacturer).
 		SetGroupID(gid).
 		SetAssetID(int64(data.AssetID))
+
+	if data.SerialNumber != "" {
+		q.SetSerialNumber(data.SerialNumber)
+	}
+	if data.PurchasePrice > 0 {
+		q.SetPurchasePrice(data.PurchasePrice)
+	}
 
 	if data.ParentID != uuid.Nil {
 		q.SetParentID(data.ParentID)

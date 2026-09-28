@@ -116,4 +116,11 @@
     <string name="photo_upload_failed">Photo upload failed: %s</string>
     <string name="photo_crop_applied">Crop applied</string>
     <string name="photo_res_already_lower">Resolution is already lower than this preset</string>
+    <string name="location_selector_title">Location</string>
+    <string name="location_selector_hint">Select storage location (optional)</string>
+    <string name="location_selector_clear">Clear location</string>
+    <string name="location_selector_none">No location (Clear)</string>
+    <string name="location_search_hint">Search location or path…</string>
+    <string name="location_loading">Loading locations…</string>
+    <string name="location_none_found">No locations found</string>
 </resources>

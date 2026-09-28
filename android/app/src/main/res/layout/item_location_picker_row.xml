@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/layoutLocationRow"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingHorizontal="8dp"
+    android:paddingVertical="12dp">
+
+    <!-- Location Pin or Clear Icon -->
+    <ImageView
+        android:id="@+id/ivLocationIcon"
+        android:layout_width="22dp"
+        android:layout_height="22dp"
+        android:layout_marginEnd="12dp"
+        android:contentDescription="@null"
+        android:src="@drawable/ic_nav_locations"
+        app:tint="@color/primary" />
+
+    <!-- Text Group (Name & Path) -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tvLocationName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/on_surface"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvLocationPath"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/on_surface_variant"
+            android:textSize="12sp"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <!-- Selected Checkmark -->
+    <ImageView
+        android:id="@+id/ivSelectedCheck"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_marginStart="8dp"
+        android:contentDescription="@null"
+        android:src="@drawable/ic_check"
+        android:visibility="gone"
+        app:tint="@color/primary" />
+
+</LinearLayout>

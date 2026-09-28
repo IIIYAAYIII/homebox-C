@@ -82,3 +82,21 @@ data class LocationTreeItem(
     @SerializedName("children") val children: List<LocationTreeItem>? = null,
     @SerializedName("itemCount") val itemCount: Int? = 0
 ) : Serializable
+
+data class FlatLocationItem(
+    val id: String,
+    val name: String,
+    val treeString: String
+) : Serializable
+
+fun List<LocationTreeItem>.flattenLocations(prefix: String = ""): List<FlatLocationItem> {
+    val result = mutableListOf<FlatLocationItem>()
+    for (item in this) {
+        val currentPath = if (prefix.isEmpty()) item.name else "$prefix > ${item.name}"
+        result.add(FlatLocationItem(id = item.id, name = item.name, treeString = currentPath))
+        item.children?.let { children ->
+            result.addAll(children.flattenLocations(currentPath))
+        }
+    }
+    return result
+}

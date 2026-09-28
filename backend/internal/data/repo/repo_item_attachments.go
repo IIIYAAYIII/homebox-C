@@ -361,7 +361,10 @@ func (r *AttachmentRepo) Create(ctx context.Context, itemID uuid.UUID, doc ItemC
 	}
 
 	// Get the group ID for the item the attachment is being created for
-	itemGroup, err := tx.Entity.Query().QueryGroup().Where(group.HasEntitiesWith(entity.ID(itemID))).First(ctx)
+	itemGroup, err := tx.Entity.Query().Where(entity.ID(itemID)).QueryGroup().First(ctx)
+	if err != nil {
+		itemGroup, err = tx.Group.Query().Where(group.HasEntitiesWith(entity.ID(itemID))).First(ctx)
+	}
 	if err != nil {
 		log.Err(err).Msg("failed to get item group")
 		err := tx.Rollback()

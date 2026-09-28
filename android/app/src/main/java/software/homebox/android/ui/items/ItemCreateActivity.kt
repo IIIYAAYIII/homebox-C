@@ -5,13 +5,18 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.bumptech.glide.Glide
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
 import kotlinx.coroutines.Dispatchers
@@ -20,11 +25,15 @@ import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONObject
+import retrofit2.Response
 import software.homebox.android.R
 import software.homebox.android.data.api.ApiClient
 import software.homebox.android.data.api.CreateEntityRequest
+import software.homebox.android.data.api.FlatLocationItem
+import software.homebox.android.data.api.flattenLocations
 import software.homebox.android.databinding.ActivityItemCreateBinding
+import software.homebox.android.databinding.BottomSheetLocationPickerBinding
 import software.homebox.android.ui.photo.BitmapUtils
 import software.homebox.android.ui.photo.PhotoEditorActivity
 import java.io.File
@@ -35,6 +44,13 @@ class ItemCreateActivity : AppCompatActivity() {
 
     private var currentPhotoPath: String? = null
     private var cameraTempUri: Uri? = null
+
+    // Location selection state
+    private var selectedLocationId: String? = null
+    private var selectedLocationName: String? = null
+    private var selectedLocationTreeString: String? = null
+    private val locationList = mutableListOf<FlatLocationItem>()
+    private var isLocationsLoaded = false
 
     private val scanBarcodeLauncher = registerForActivityResult(ScanContract()) { result ->
         if (result.contents != null) {
@@ -83,6 +99,28 @@ class ItemCreateActivity : AppCompatActivity() {
             finish()
         }
 
+        // Initialize location if pre-passed via intent (e.g. browsing a location)
+        val initParentId = intent.getStringExtra("extra_parent_id")
+        val initParentName = intent.getStringExtra("extra_parent_name")
+        if (!initParentId.isNullOrBlank()) {
+            selectedLocationId = initParentId
+            selectedLocationName = initParentName
+            selectedLocationTreeString = initParentName
+            updateLocationUI()
+        }
+
+        // Load full location tree in background
+        loadLocations()
+
+        // Location Selector Card clicks
+        binding.cardLocationSelector.setOnClickListener {
+            showLocationPickerDialog()
+        }
+
+        binding.btnClearLocation.setOnClickListener {
+            clearSelectedLocation()
+        }
+
         binding.btnScanSerial.setOnClickListener {
             val options = ScanOptions().apply {
                 setPrompt(getString(R.string.scanner_prompt))
@@ -113,6 +151,105 @@ class ItemCreateActivity : AppCompatActivity() {
         }
     }
 
+    private fun loadLocations() {
+        lifecycleScope.launch {
+            try {
+                val service = ApiClient.getService()
+                val resp = withContext(Dispatchers.IO) {
+                    service.getLocationTree()
+                }
+                if (resp.isSuccessful && resp.body() != null) {
+                    val tree = resp.body()!!
+                    locationList.clear()
+                    locationList.addAll(tree.flattenLocations())
+                    isLocationsLoaded = true
+
+                    // If a location was already selected, update its full breadcrumb path
+                    if (selectedLocationId != null) {
+                        val matched = locationList.firstOrNull { it.id == selectedLocationId }
+                        if (matched != null) {
+                            selectedLocationName = matched.name
+                            selectedLocationTreeString = matched.treeString
+                            updateLocationUI()
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    private fun updateLocationUI() {
+        val locText = selectedLocationTreeString ?: selectedLocationName
+        if (!locText.isNullOrBlank()) {
+            binding.tvSelectedLocation.text = locText
+            binding.tvSelectedLocation.setTextColor(ContextCompat.getColor(this, R.color.on_surface))
+            binding.btnClearLocation.visibility = View.VISIBLE
+            binding.ivLocationDropdownArrow.visibility = View.GONE
+        } else {
+            binding.tvSelectedLocation.text = getString(R.string.location_selector_hint)
+            binding.tvSelectedLocation.setTextColor(ContextCompat.getColor(this, R.color.on_surface_variant))
+            binding.btnClearLocation.visibility = View.GONE
+            binding.ivLocationDropdownArrow.visibility = View.VISIBLE
+        }
+    }
+
+    private fun clearSelectedLocation() {
+        selectedLocationId = null
+        selectedLocationName = null
+        selectedLocationTreeString = null
+        updateLocationUI()
+    }
+
+    private fun showLocationPickerDialog() {
+        val bottomSheetDialog = BottomSheetDialog(this)
+        val sheetBinding = BottomSheetLocationPickerBinding.inflate(layoutInflater)
+        bottomSheetDialog.setContentView(sheetBinding.root)
+
+        val adapter = LocationPickerAdapter { selectedItem ->
+            if (selectedItem == null) {
+                clearSelectedLocation()
+            } else {
+                selectedLocationId = selectedItem.id
+                selectedLocationName = selectedItem.name
+                selectedLocationTreeString = selectedItem.treeString
+                updateLocationUI()
+            }
+            bottomSheetDialog.dismiss()
+        }
+
+        sheetBinding.rvLocations.layoutManager = LinearLayoutManager(this)
+        sheetBinding.rvLocations.adapter = adapter
+        adapter.setData(locationList, selectedLocationId)
+
+        sheetBinding.btnSheetClose.setOnClickListener {
+            bottomSheetDialog.dismiss()
+        }
+
+        sheetBinding.etLocationSearch.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                val q = s?.toString().orEmpty()
+                adapter.filter(q)
+                sheetBinding.tvLocationEmpty.visibility =
+                    if (adapter.itemCount <= 1 && q.isNotBlank()) View.VISIBLE else View.GONE
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
+
+        if (!isLocationsLoaded) {
+            sheetBinding.pbLocationLoading.visibility = View.VISIBLE
+            lifecycleScope.launch {
+                loadLocations()
+                sheetBinding.pbLocationLoading.visibility = View.GONE
+                adapter.setData(locationList, selectedLocationId)
+            }
+        }
+
+        bottomSheetDialog.show()
+    }
+
     private fun showPhotoSourceDialog() {
         val options = arrayOf(
             getString(R.string.photo_source_camera),
@@ -131,7 +268,7 @@ class ItemCreateActivity : AppCompatActivity() {
     }
 
     private fun checkCameraPermissionAndLaunch() {
-        if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
             launchCamera()
         } else {
             requestCameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
@@ -189,6 +326,7 @@ class ItemCreateActivity : AppCompatActivity() {
 
         val request = CreateEntityRequest(
             name = name,
+            parentId = selectedLocationId,
             description = description,
             quantity = quantity,
             modelNumber = model,
@@ -213,32 +351,34 @@ class ItemCreateActivity : AppCompatActivity() {
                             Toast.makeText(this@ItemCreateActivity, R.string.photo_uploading, Toast.LENGTH_SHORT).show()
                         }
 
-                        val uploadSuccess = withContext(Dispatchers.IO) {
+                        val uploadError = withContext(Dispatchers.IO) {
                             try {
                                 val file = File(photoPath)
+                                val safeName = "photo_${System.currentTimeMillis()}.jpg"
+                                val fileBody = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
+
                                 val multipartBody = MultipartBody.Builder()
                                     .setType(MultipartBody.FORM)
-                                    .addFormDataPart("name", file.name)
+                                    .addFormDataPart("name", safeName)
                                     .addFormDataPart("type", "photo")
                                     .addFormDataPart("primary", "true")
-                                    .addFormDataPart(
-                                        "file",
-                                        file.name,
-                                        file.asRequestBody("image/jpeg".toMediaTypeOrNull())
-                                    )
+                                    .addFormDataPart("file", safeName, fileBody)
                                     .build()
 
                                 val uploadResp = service.uploadAttachment(createdEntity.id, multipartBody)
-                                uploadResp.isSuccessful
+                                if (uploadResp.isSuccessful) {
+                                    null
+                                } else {
+                                    extractErrorMessage(uploadResp)
+                                }
                             } catch (e: Exception) {
-                                e.printStackTrace()
-                                false
+                                e.localizedMessage ?: "上传网络异常"
                             }
                         }
 
-                        if (!uploadSuccess) {
+                        if (uploadError != null) {
                             withContext(Dispatchers.Main) {
-                                Toast.makeText(this@ItemCreateActivity, "物品已创建，但照片上传失败", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(this@ItemCreateActivity, getString(R.string.photo_upload_failed, uploadError), Toast.LENGTH_LONG).show()
                             }
                         }
                     }
@@ -247,7 +387,8 @@ class ItemCreateActivity : AppCompatActivity() {
                     setResult(Activity.RESULT_OK)
                     finish()
                 } else {
-                    Toast.makeText(this@ItemCreateActivity, "录入失败: " + response.message(), Toast.LENGTH_SHORT).show()
+                    val errorMsg = extractErrorMessage(response)
+                    Toast.makeText(this@ItemCreateActivity, "录入失败: $errorMsg", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Exception) {
                 Toast.makeText(this@ItemCreateActivity, "录入出错: " + e.localizedMessage, Toast.LENGTH_SHORT).show()
@@ -256,5 +397,25 @@ class ItemCreateActivity : AppCompatActivity() {
                 binding.pbLoading.visibility = View.GONE
             }
         }
+    }
+
+    private fun extractErrorMessage(response: Response<*>): String {
+        try {
+            val raw = response.errorBody()?.string()
+            if (!raw.isNullOrBlank()) {
+                val json = JSONObject(raw)
+                if (json.has("error")) {
+                    val err = json.getString("error")
+                    if (err.isNotBlank()) return err
+                }
+                if (json.has("message")) {
+                    val msg = json.getString("message")
+                    if (msg.isNotBlank()) return msg
+                }
+                return raw
+            }
+        } catch (_: Exception) {}
+        val msg = response.message()
+        return if (msg.isNotBlank()) msg else "HTTP ${response.code()}"
     }
 }

@@ -116,4 +116,11 @@
     <string name="photo_upload_failed">照片上传失败: %s</string>
     <string name="photo_crop_applied">裁剪已生效</string>
     <string name="photo_res_already_lower">当前照片分辨率已低于该预设</string>
+    <string name="location_selector_title">存放位置</string>
+    <string name="location_selector_hint">点击选择存放位置 (可选)</string>
+    <string name="location_selector_clear">清除位置</string>
+    <string name="location_selector_none">不指定位置 (清空)</string>
+    <string name="location_search_hint">搜索位置名称或层级…</string>
+    <string name="location_loading">正在加载位置列表…</string>
+    <string name="location_none_found">未找到匹配的存放位置</string>
 </resources>

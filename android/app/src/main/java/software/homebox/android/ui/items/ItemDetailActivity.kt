@@ -145,16 +145,15 @@ class ItemDetailActivity : AppCompatActivity() {
             try {
                 val service = ApiClient.getService()
                 val file = File(photoPath)
+                val safeName = "photo_${System.currentTimeMillis()}.jpg"
+                val fileBody = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
+
                 val multipartBody = MultipartBody.Builder()
                     .setType(MultipartBody.FORM)
-                    .addFormDataPart("name", file.name)
+                    .addFormDataPart("name", safeName)
                     .addFormDataPart("type", "photo")
                     .addFormDataPart("primary", "true")
-                    .addFormDataPart(
-                        "file",
-                        file.name,
-                        file.asRequestBody("image/jpeg".toMediaTypeOrNull())
-                    )
+                    .addFormDataPart("file", safeName, fileBody)
                     .build()
 
                 val resp = withContext(Dispatchers.IO) {
@@ -166,15 +165,35 @@ class ItemDetailActivity : AppCompatActivity() {
                     loadEntityById(entityId)
                     setResult(RESULT_OK)
                 } else {
-                    val errMsg = resp.message().ifBlank { "状态码 ${resp.code()}" }
-                    Toast.makeText(this@ItemDetailActivity, getString(R.string.photo_upload_failed, errMsg), Toast.LENGTH_SHORT).show()
+                    val errMsg = extractErrorMessage(resp)
+                    Toast.makeText(this@ItemDetailActivity, getString(R.string.photo_upload_failed, errMsg), Toast.LENGTH_LONG).show()
                 }
             } catch (e: Exception) {
-                Toast.makeText(this@ItemDetailActivity, getString(R.string.photo_upload_failed, e.localizedMessage), Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@ItemDetailActivity, getString(R.string.photo_upload_failed, e.localizedMessage), Toast.LENGTH_LONG).show()
             } finally {
                 binding.btnAddDetailPhoto.isEnabled = true
             }
         }
+    }
+
+    private fun extractErrorMessage(response: retrofit2.Response<*>): String {
+        try {
+            val raw = response.errorBody()?.string()
+            if (!raw.isNullOrBlank()) {
+                val json = org.json.JSONObject(raw)
+                if (json.has("error")) {
+                    val err = json.getString("error")
+                    if (err.isNotBlank()) return err
+                }
+                if (json.has("message")) {
+                    val msg = json.getString("message")
+                    if (msg.isNotBlank()) return msg
+                }
+                return raw
+            }
+        } catch (_: Exception) {}
+        val msg = response.message()
+        return if (msg.isNotBlank()) msg else "HTTP ${response.code()}"
     }
 
     private fun bindEntity(item: EntityItem) {

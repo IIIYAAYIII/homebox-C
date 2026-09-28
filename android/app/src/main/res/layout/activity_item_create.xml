@@ -31,6 +31,82 @@
             android:orientation="vertical"
             android:padding="16dp">
 
+            <!-- Location Selector Card (Matches Web Top Placement) -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardLocationSelector"
+                style="@style/Widget.Material3.CardView.Outlined"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:clickable="true"
+                android:focusable="true"
+                app:cardCornerRadius="8dp"
+                app:strokeColor="@color/outline">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="14dp"
+                    android:paddingVertical="12dp">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:layout_marginEnd="12dp"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_nav_locations"
+                        app:tint="@color/primary" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/location_selector_title"
+                            android:textColor="@color/primary"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvSelectedLocation"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:ellipsize="end"
+                            android:maxLines="1"
+                            android:text="@string/location_selector_hint"
+                            android:textColor="@color/on_surface_variant"
+                            android:textSize="15sp" />
+                    </LinearLayout>
+
+                    <ImageButton
+                        android:id="@+id/btnClearLocation"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:layout_marginStart="4dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:contentDescription="@string/location_selector_clear"
+                        android:src="@drawable/ic_close"
+                        android:visibility="gone"
+                        app:tint="@color/on_surface_variant" />
+
+                    <ImageView
+                        android:id="@+id/ivLocationDropdownArrow"
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:layout_marginStart="4dp"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_chevron_down"
+                        app:tint="@color/on_surface_variant" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
